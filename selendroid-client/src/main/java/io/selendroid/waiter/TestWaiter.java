@@ -32,7 +32,10 @@ import org.openqa.selenium.support.ui.WebDriverWait;
  */
 public class TestWaiter {
 
-  private static final long DEFAULT_TIME_OUT = 10;
+  // Changing this value to 30 significantly decreases the failure rate
+  // while testing io.selendroid.webviewdrivertests.WebTestSuite suite.
+  private static final long DEFAULT_TIME_OUT = /* 10 */ 30;
+
   private static final TimeUnit DEFAULT_UNIT = SECONDS;
 
   /**

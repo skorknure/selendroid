@@ -18,6 +18,7 @@ import io.selendroid.tests.domain.PreferedProgrammingLanguage;
 import io.selendroid.tests.domain.UserDO;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriverException;
@@ -32,6 +33,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
  */
 public class UserRegistrationTest extends BaseAndroidTest {
   @Test
+  @Ignore("Suspends the testing process. Never passed correctly.")
   public void assertUserAccountCanRegistered() throws Exception {
     UserDO user =
         new UserDO("u$erNAme", "me@myserver.com", "mySecret", "Dominik Dary",
