@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013 eBay Software Foundation and selendroid committers.
+ * Copyright 2012-2014 eBay Software Foundation and selendroid committers.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -22,13 +22,10 @@ import com.beust.jcommander.Parameter;
 public class SelendroidConfiguration {
 
   @Parameter(description = "port the server will listen on.", names = "-port")
-  private int port = 5555;
+  private int port = 4444;
 
   @Parameter(description = "timeout that will be used to start Android emulators", names = "-timeoutEmulatorStart")
   private long timeoutEmulatorStart = 300000;
-
-  @Parameter(description = "if true, adb will be restarted while starting selendroid-standalone.", names = "-restartAdb")
-  private boolean restartAdb = false;
 
   @Parameter(description = "location of the application under test. Absolute path to the apk", names = {
       "-app", "-aut" })
@@ -69,6 +66,9 @@ public class SelendroidConfiguration {
 
   @Parameter(names = "-noWebviewApp", description = "If you don't want selendroid to auto-extract and have 'AndroidDriver' (webview only app) available.")
   private boolean noWebViewApp = false;
+
+  @Parameter(names = "-noClearData", description = "When you quit the app, shell pm clear will not be called with this option specified.")
+  private boolean noClearData = false;
   
   public void setKeystore(String keystore) {
     this.keystore = keystore;
@@ -130,14 +130,6 @@ public class SelendroidConfiguration {
 
   public void setTimeoutEmulatorStart(long timeoutEmulatorStart) {
     this.timeoutEmulatorStart = timeoutEmulatorStart;
-  }
-
-  public boolean isRestartAdb() {
-    return restartAdb;
-  }
-
-  public void setRestartAdb(boolean restartAdb) {
-    this.restartAdb = restartAdb;
   }
 
   public boolean isVerbose() {
@@ -202,5 +194,13 @@ public class SelendroidConfiguration {
 
   public void setNoWebViewApp(boolean noWebViewApp) {
     this.noWebViewApp = noWebViewApp;
+  }
+
+  public boolean isNoClearData() {
+    return noClearData;
+  }
+
+  public void setNoClearData(boolean noClearData) {
+    this.noClearData = noClearData;
   }
 }

@@ -35,4 +35,10 @@ public class DeleteCookies extends RequestHandler {
     getSelendroidDriver().deleteCookie(url);
     return new SelendroidResponse(getSessionId(), "");
   }
+
+  @Override
+  public boolean commandAllowedWithAlertPresentInWebViewMode() {
+    return true;
+  }
+
 }

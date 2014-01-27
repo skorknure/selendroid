@@ -14,21 +14,28 @@
 
 package io.selendroid.android;
 
-import io.selendroid.server.model.Keyboard;
+import android.view.MotionEvent;
+import io.selendroid.ServerInstrumentation;
 
-public interface KeySender {
+public class InstrumentedMotionSender implements MotionSender {
 
-  /**
-   * @return A {@link Keyboard} object which sends key using this {@code KeySender}.
-   */
-  Keyboard getKeyboard();
+  private final ServerInstrumentation instrumentation;
 
-  /**
-   * Sends key events. This method will send a portion of the given {@link CharSequence} as a single {@link String} if
-   * the portion does not contain any special
-   * keys.
-   *
-   * @param text the keys to send type.
-   */
-  void send(CharSequence text);
+  public InstrumentedMotionSender(ServerInstrumentation instrumentation) {
+    this.instrumentation = instrumentation;
+  }
+
+  @Override
+  public boolean send(Iterable<MotionEvent> events) {
+    try {
+      instrumentation.waitForIdleSync();
+      for (MotionEvent event : events) {
+        instrumentation.sendPointerSync(event);
+      }
+      return true;
+    } catch (SecurityException ignored) {
+      ignored.printStackTrace();
+    }
+    return false;
+  }
 }

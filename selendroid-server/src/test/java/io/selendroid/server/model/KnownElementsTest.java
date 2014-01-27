@@ -14,17 +14,18 @@
 package io.selendroid.server.model;
 
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import android.view.View;
+import android.webkit.WebView;
 import io.selendroid.ServerInstrumentation;
-
-import java.util.UUID;
-
+import io.selendroid.android.InstrumentedKeySender;
+import io.selendroid.android.KeySender;
 import org.junit.Assert;
 import org.junit.Test;
 
-import android.view.View;
-import android.webkit.WebView;
+import java.util.UUID;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class KnownElementsTest {
   @Test
@@ -134,7 +135,8 @@ public class KnownElementsTest {
     when(view.getId()).thenReturn(id);
 
     ServerInstrumentation instrumentation = mock(ServerInstrumentation.class);
-    return new AndroidNativeElement(view, instrumentation, ke);
+    KeySender keys = new InstrumentedKeySender(instrumentation);
+    return new AndroidNativeElement(view, instrumentation, keys, ke);
   }
 
   private AndroidElement createWebElement(String id, KnownElements ke) {

@@ -13,9 +13,21 @@
  */
 package io.selendroid.server.model;
 
+import android.app.Activity;
+import android.content.res.Resources.Theme;
+import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Point;
+import android.graphics.drawable.Drawable;
+import android.view.Display;
+import android.view.View;
+import android.webkit.WebView;
 import io.selendroid.ServerInstrumentation;
 import io.selendroid.android.AndroidTouchScreen;
 import io.selendroid.android.AndroidWait;
+import io.selendroid.android.InstrumentedKeySender;
+import io.selendroid.android.InstrumentedMotionSender;
 import io.selendroid.android.KeySender;
 import io.selendroid.android.ViewHierarchyAnalyzer;
 import io.selendroid.android.WindowType;
@@ -33,6 +45,9 @@ import io.selendroid.server.model.internal.execute_native.NativeExecuteScript;
 import io.selendroid.server.model.js.AndroidAtoms;
 import io.selendroid.util.Preconditions;
 import io.selendroid.util.SelendroidLogger;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -46,21 +61,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import android.app.Activity;
-import android.content.res.Resources.Theme;
-import android.content.res.TypedArray;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Point;
-import android.graphics.drawable.Drawable;
-import android.view.Display;
-import android.view.View;
-import android.webkit.WebView;
 
 
 public class DefaultSelendroidDriver implements SelendroidDriver {
@@ -90,8 +90,8 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
 
   public DefaultSelendroidDriver(ServerInstrumentation instrumentation) {
     serverInstrumentation = instrumentation;
-    keySender = new KeySender(serverInstrumentation);
-    touch = new AndroidTouchScreen(serverInstrumentation);
+    keySender = new InstrumentedKeySender(serverInstrumentation);
+    touch = new AndroidTouchScreen(serverInstrumentation, new InstrumentedMotionSender(serverInstrumentation));
   }
 
   /*
@@ -188,7 +188,7 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
       copy.put(BROWSER_NAME, "selendroid");
       copy.put(ROTATABLE, false);
       copy.put(PLATFORM, "android");
-      copy.put(SUPPORTS_ALERTS, false);
+      copy.put(SUPPORTS_ALERTS, true);
       copy.put(SUPPORTS_JAVASCRIPT, true);
       copy.put("version", serverInstrumentation.getServerVersion());
       copy.put(ACCEPT_SSL_CERTS, true);
@@ -382,7 +382,7 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
     nativeExecuteScriptMap.put("getL10nKeyTranslation", new GetL10nKeyTranslation(
         serverInstrumentation));
     nativeExecuteScriptMap.put("findElementByAndroidTag",
-        new FindElementByAndroidTag(session.getKnownElements(), serverInstrumentation));
+        new FindElementByAndroidTag(session.getKnownElements(), serverInstrumentation, keySender));
 
     return session.getSessionId();
   }
@@ -434,7 +434,7 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
 
   public class NativeSearchScope extends AbstractNativeElementContext {
     public NativeSearchScope(ServerInstrumentation instrumentation, KnownElements knownElements) {
-      super(instrumentation, knownElements);
+      super(instrumentation, keySender, knownElements);
     }
 
     @Override
@@ -504,6 +504,7 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
     } else {
       selendroidWebDriver.get(url);
     }
+    getSession().getKnownElements().clear();
   }
 
   public boolean isNativeWindowMode() {
@@ -596,4 +597,97 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
     }
   }
 
+  public void setFrameContext(Object obj) throws JSONException {
+    System.out.println("setting frame context: " + obj);
+    if (obj.equals(null)) {
+      selendroidWebDriver.switchToDefaultContent();
+    } else if (obj instanceof Number) {
+      selendroidWebDriver.frame(((Number) obj).intValue());
+    } else if (obj instanceof JSONObject && ((JSONObject) obj).has("ELEMENT")) {
+      selendroidWebDriver.frame((AndroidWebElement) session.getKnownElements().get(
+          ((JSONObject) obj).getString("ELEMENT")));
+    } else if (obj instanceof String) {
+      selendroidWebDriver.frame((String) obj);
+    } else {
+      throw new IllegalArgumentException("Unsupported frame locator: " + obj.getClass().getName());
+    }
+  }
+
+  @Override
+  public void back() {
+    if (isNativeWindowMode()) {
+      getKeyboard().sendKeys("\uE100".split(""));
+    } else {
+      selendroidWebDriver.back();
+    }
+  }
+
+  @Override
+  public void forward() {
+    if (isNativeWindowMode()) {
+      selendroidNativeDriver.forward();
+    } else {
+      selendroidWebDriver.forward();
+    }
+  }
+
+  @Override
+  public void refresh() {
+    if (isNativeWindowMode()) {
+      selendroidNativeDriver.refresh();
+    } else {
+      selendroidWebDriver.refresh();
+    }
+  }
+
+  public boolean isAlertPresent() {
+    if (isNativeWindowMode() || selendroidWebDriver == null) {
+      // alert handling is not done in 'native' mode
+      return false;
+    }
+    if (selendroidWebDriver.isAlertPresent()) {
+      AndroidElement el = findNativeElementWithoutDelay(By.id("button1"));
+      return el != null && el.isDisplayed();
+    }
+    return false;
+  }
+
+  public String getAlertText() {
+    System.out.println("DefaultSelendroidDriver getAlertText");
+    return selendroidWebDriver.getCurrentAlertMessage();
+  }
+
+  public void acceptAlert() {
+    findNativeElementWithoutDelay(By.id("button1")).click();
+    selendroidWebDriver.clearCurrentAlertMessage();
+  }
+
+  public void dismissAlert() {
+    AndroidElement dismiss = findNativeElementWithoutDelay(By.id("button2"));
+    if (dismiss != null && dismiss.isDisplayed()) {
+      dismiss.click();
+      selendroidWebDriver.clearCurrentAlertMessage();
+    } else {
+      acceptAlert();
+    }
+  }
+
+  public void setAlertText(CharSequence... keysToSend) {
+    findNativeElementWithoutDelay(By.id("value")).enterText(keysToSend);
+  }
+
+  private AndroidElement findNativeElementWithoutDelay(By by) {
+    long previousTimeout = serverInstrumentation.getAndroidWait().getTimeoutInMillis();
+    serverInstrumentation.getAndroidWait().setTimeoutInMillis(0);
+    String previousActiveWindow = activeWindowType;
+    activeWindowType = WindowType.NATIVE_APP.name();
+    try {
+      return findElement(by);
+    } catch (NoSuchElementException nse) {
+    } finally {
+      serverInstrumentation.getAndroidWait().setTimeoutInMillis(previousTimeout);
+      activeWindowType = previousActiveWindow;
+    }
+    return null;
+  }
 }

@@ -21,7 +21,6 @@ import io.selendroid.waiter.WaitingConditions;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -32,7 +31,7 @@ public class WaitForProgressBarGoneAwayTest extends BaseAndroidTest {
   public static final By byIdUsernameLocator = By.id("label_username");
   public static final By byNameUsernameLocator = By.name("label_usernameCD");
   public static final By byLinkTextUsernameLocator = By.linkText("Username");
-
+  private final int timeout = 12;
 
   protected void precondition() {
     driver().switchTo().window(NATIVE_APP);
@@ -41,35 +40,29 @@ public class WaitForProgressBarGoneAwayTest extends BaseAndroidTest {
   }
 
   @Test
-  @Ignore("Fails randomly on 90% runs. Timeout constant is unused inside startTimeOutTest().")
-  public void testShouldBeAbleToPassWithCorrectTimeoutAndByIdLocator() {
+  public void shouldPassWithRightTimeoutUsingIdLocator() {
     precondition();
-    int timeout = 32;
+
     driver().manage().timeouts().implicitlyWait(timeout, TimeUnit.SECONDS);
     startTimeOutTest(timeout, byIdUsernameLocator);
   }
 
   @Test
-  @Ignore("Fails randomly on 90% runs. Timeout constant is unused inside startTimeOutTest().")
-  public void testShouldBeAbleToPassWithCorrectTimeoutAndByNameLocator() {
+  public void shouldPassWithRightTimeoutUsingNameLocator() {
     precondition();
-    int timeout = 32;
     driver().manage().timeouts().implicitlyWait(timeout, TimeUnit.SECONDS);
     startTimeOutTest(timeout, byNameUsernameLocator);
   }
 
   @Test
-  @Ignore("Same as previous two. Even more - this method is a copy of " +
-          "testShouldBeAbleToPassWithCorrectTimeoutAndByIdLocator().")
-  public void testShouldBeAbleToPassWithCorrectTimeoutAndByLinkTextLocator() {
+  public void shouldPassWithRightTimeoutUsingLinkTextLocator() {
     precondition();
-    int timeout = 32;
     driver().manage().timeouts().implicitlyWait(timeout, TimeUnit.SECONDS);
     startTimeOutTest(timeout, byIdUsernameLocator);
   }
 
   @Test
-  public void testShouldNotBeAbleToPassWithTooShortTimeout() {
+  public void shouldNotPassWithTooShortTimeout() {
     precondition();
     int timeout = 5;
     driver().manage().timeouts().implicitlyWait(timeout, TimeUnit.SECONDS);
@@ -88,9 +81,10 @@ public class WaitForProgressBarGoneAwayTest extends BaseAndroidTest {
   }
 
   @Test
-  public void testShouldBeAbleToWaitUntilToastWasDisplayed() throws Exception {
+  public void shouldWaitUntilToastIsDisplayed() throws Exception {
+    precondition();
     driver().findElement(By.id("showToastButton")).click();
-    WebElement toast = waitForElement(By.linkText(""), 4, driver());
+    WebElement toast = waitForElement(By.linkText("Hello selendroid toast!"), 4, driver());
     Assert.assertNotNull(toast);
   }
 }
