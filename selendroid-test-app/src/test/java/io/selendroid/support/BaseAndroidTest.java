@@ -86,12 +86,6 @@ public class BaseAndroidTest {
 
   protected void openWebdriverTestPage(String page) {
     driver().switchTo().window(NATIVE_APP);
-
-    // Doing this fixes multiple io.selendroid.exceptions.StaleElementReferenceException
-    // exceptions while testing io.selendroid.webviewdrivertests.WebTestSuite suite.
-    // Use another approach?
-    driver().get("and-activity://" + "io.selendroid.testapp." + "HomeScreenActivity");
-
     driver().get("and-activity://" + "io.selendroid.testapp." + "WebViewActivity");
     waitFor(WaitingConditions.driverUrlToBe(driver(), "and-activity://WebViewActivity"));
 
