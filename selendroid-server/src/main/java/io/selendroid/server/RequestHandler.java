@@ -13,67 +13,62 @@
  */
 package io.selendroid.server;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import io.selendroid.exceptions.SelendroidException;
 import io.selendroid.server.model.AndroidElement;
 import io.selendroid.server.model.DefaultSelendroidDriver;
 import io.selendroid.server.model.KnownElements;
 import io.selendroid.server.model.SelendroidDriver;
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.webbitserver.HttpRequest;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public abstract class RequestHandler extends BaseRequestHandler {
-  
-  public RequestHandler(HttpRequest request, String mappedUri) {
-    super(request, mappedUri);
+
+  public RequestHandler(String mappedUri) {
+    super(mappedUri);
   }
 
   
-  protected SelendroidDriver getSelendroidDriver() {
-    DefaultSelendroidDriver driver =
-        (DefaultSelendroidDriver) request.data().get(AndroidServlet.DRIVER_KEY);
-    return driver;
+  protected SelendroidDriver getSelendroidDriver(HttpRequest request) {
+    return (DefaultSelendroidDriver) request.data().get(AndroidServlet.DRIVER_KEY);
   }
 
-  protected String getIdOfKnownElement(AndroidElement element) {
-    KnownElements knownElements = getKnownElements();
+  protected String getIdOfKnownElement(HttpRequest request, AndroidElement element) {
+    KnownElements knownElements = getKnownElements(request);
     if (knownElements == null) {
       return null;
     }
     return knownElements.getIdOfElement(element);
   }
 
-  protected AndroidElement getElementFromCache(String id) {
-    KnownElements knownElements = getKnownElements();
+  protected AndroidElement getElementFromCache(HttpRequest request, String id) {
+    KnownElements knownElements = getKnownElements(request);
     if (knownElements == null) {
       return null;
     }
     return knownElements.get(id);
   }
 
-  protected KnownElements getKnownElements() {
-    if (getSelendroidDriver().getSession() == null) {
+  protected KnownElements getKnownElements(HttpRequest request) {
+    if (getSelendroidDriver(request).getSession() == null) {
       return null;
     }
-    return getSelendroidDriver().getSession().getKnownElements();
+    return getSelendroidDriver(request).getSession().getKnownElements();
   }
 
-  protected String[] extractKeysToSendFromPayload() throws JSONException {
-    JSONArray valueArr = getPayload().getJSONArray("value");
+  protected String[] extractKeysToSendFromPayload(HttpRequest request) throws JSONException {
+    JSONArray valueArr = getPayload(request).getJSONArray("value");
     if (valueArr == null || valueArr.length() == 0) {
       throw new SelendroidException("No key to send to an element was found.");
     }
-    List<CharSequence> temp = new ArrayList<CharSequence>();
+
+    String[] toReturn = new String[valueArr.length()];
 
     for (int i = 0; i < valueArr.length(); i++) {
-      temp.add(valueArr.getString(i));
+      toReturn[i] = valueArr.getString(i);
     }
-    String[] keysToSend = temp.toArray(new String[0]);
-    return keysToSend;
+
+    return toReturn;
   }
 
-  
 }
