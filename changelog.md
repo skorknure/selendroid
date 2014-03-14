@@ -1,4 +1,19 @@
-0.8.0-SNAPSHOT (under developement)
+0.9.0-SNAPSHOT (under developement)
+---
+- Rotation Support
+- Fixes: [#268](../../issues/268), [#284](../../issues/284), [#309](../../issues/309), [#275](../../issues/275) 
+- Adding support for disabling native events for sendKeys command to support e.g. German umlauts ([#7](../../issues/7),[#110](../../issues/110))
+- Added support for sending key events, send text, tap and execute shell command via adb connection
+- removed -installedApp command line parameter of the selendroid-standalone jar
+- Selendroid standalone supports by default already started emulators. Even if they are started manually after selendroid-standalone has been started, they are identified and can be used for test sessions.
+- Support execute async script ([#254](../../issues/254))
+- Add native execute script action TwoPointerGesture. this is temporary solution until the mobile WebDriver multi touch  spec is implemented [#292](../../issues/292)
+- Introducing a sessionTimeout (in seconds) that will automatically stop a session. Default value is 30 minutes.
+- Added support for using 'platformVersion' in capabilities in order to support Selenium 3.0
+- Added support for using switch context endpoints to support Selenium 3.0. Swith to window mechanism is still available.
+- In order to support Selenium 3, Page source is now returned as an XML (or HTML in the case of HTML-based platforms) document representing the UI hierarchy.
+
+0.8.0
 ---
 - Default selendroid-standalone port is changed from 5555 to 4444
 - Added support for switching to a frame in webview

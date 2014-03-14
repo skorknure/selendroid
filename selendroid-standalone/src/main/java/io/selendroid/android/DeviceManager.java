@@ -16,13 +16,18 @@ package io.selendroid.android;
 import com.android.ddmlib.IDevice;
 
 public interface DeviceManager {
-  public void initialize(HardwareDeviceListener defaultListener);
+  public void initialize(HardwareDeviceListener defaultHardwareListener,
+      AndroidEmulatorPowerStateListener emulatorListener);
 
   public void registerListener(HardwareDeviceListener deviceListener);
 
   public void unregisterListener(HardwareDeviceListener deviceListener);
 
+  public void registerListener(AndroidEmulatorPowerStateListener deviceListener);
+
+  public void unregisterListener(AndroidEmulatorPowerStateListener deviceListener);
+
   public void shutdown();
-  
-  public IDevice getVirtualDevice(String serial);
+
+  public IDevice getVirtualDevice(String avdName);
 }

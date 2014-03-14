@@ -11,8 +11,9 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.selendroid.server.handler;
+package io.selendroid.server.handler.timeouts;
 
+import io.selendroid.ServerInstrumentation;
 import io.selendroid.server.RequestHandler;
 import io.selendroid.server.Response;
 import io.selendroid.util.SelendroidLogger;
@@ -20,18 +21,20 @@ import org.json.JSONException;
 import io.selendroid.server.SelendroidResponse;
 import org.webbitserver.HttpRequest;
 
-public class GetWindowHandle extends RequestHandler {
+public class SetImplicitWaitTimeout extends RequestHandler {
 
-  public GetWindowHandle(String mappedUri) {
+  public SetImplicitWaitTimeout(String mappedUri) {
     super(mappedUri);
   }
 
   @Override
   public Response handle(HttpRequest request) throws JSONException {
-    SelendroidLogger.log("get window handle command");
+    SelendroidLogger.log("set implicit wait timeout called");
 
-    String windowHandle = getSelendroidDriver(request).getWindowHandle();
+    Long timeout = getPayload(request).getLong("ms");
+    
+    ServerInstrumentation.getInstance().setImplicitWait(timeout);
 
-    return new SelendroidResponse(getSessionId(request), windowHandle);
+    return new SelendroidResponse(getSessionId(request), "");
   }
 }

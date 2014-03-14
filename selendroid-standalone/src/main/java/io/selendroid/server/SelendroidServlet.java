@@ -14,6 +14,10 @@
 package io.selendroid.server;
 
 import io.selendroid.SelendroidConfiguration;
+import io.selendroid.server.handler.AdbExecuteShellCommand;
+import io.selendroid.server.handler.AdbSendKeyEvent;
+import io.selendroid.server.handler.AdbSendText;
+import io.selendroid.server.handler.AdbTap;
 import io.selendroid.server.handler.CaptureScreenshot;
 import io.selendroid.server.handler.CreateSessionHandler;
 import io.selendroid.server.handler.DeleteSessionHandler;
@@ -26,16 +30,18 @@ import io.selendroid.server.handler.InspectorUiHandler;
 import io.selendroid.server.handler.ListSessionsHandler;
 import io.selendroid.server.handler.RequestRedirectHandler;
 import io.selendroid.server.model.SelendroidStandaloneDriver;
-import org.webbitserver.HttpRequest;
 
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import org.webbitserver.HttpRequest;
+
 public class SelendroidServlet extends BaseServlet {
   private static final Logger log = Logger.getLogger(SelendroidServlet.class.getName());
-  protected Map<String, BaseRequestHandler> redirectHandler = new HashMap<String, BaseRequestHandler>();
+  protected Map<String, BaseRequestHandler> redirectHandler =
+      new HashMap<String, BaseRequestHandler>();
   private SelendroidStandaloneDriver driver;
   private SelendroidConfiguration conf;
 
@@ -62,6 +68,13 @@ public class SelendroidServlet extends BaseServlet {
     register(getHandler, new InspectorUiHandler("/inspector/session/:sessionId"));
     register(deleteHandler, new DeleteSessionHandler("/wd/hub/session/:sessionId"));
     register(redirectHandler, new RequestRedirectHandler("/wd/hub/session/"));
+
+    register(postHandler, new GetLogs("/wd/hub/session/:sessionId/log"));
+    register(postHandler, new AdbSendKeyEvent("/wd/hub/-selendroid/:sessionId/adb/sendKeyEvent"));
+    register(postHandler, new AdbSendText("/wd/hub/-selendroid/:sessionId/adb/sendText"));
+    register(postHandler, new AdbTap("/wd/hub/-selendroid/:sessionId/adb/tap"));
+    register(postHandler, new AdbExecuteShellCommand(
+        "/wd/hub/-selendroid/:sessionId/adb/executeShellCommand"));
   }
 
   @Override
@@ -141,20 +154,20 @@ public class SelendroidServlet extends BaseServlet {
       response.end();
     } else {
       UiResponse uiResponse = (UiResponse) result;
-      response.setContentType("text/html");
+
       response.setEncoding(Charset.forName("UTF-8"));
 
       response.setStatus(200);
 
       if (uiResponse != null) {
         if (uiResponse.getObject() instanceof byte[]) {
+          response.setContentType("image/png");
           byte[] data = (byte[]) uiResponse.getObject();
-          
           response.setContent(data);
         } else {
+          response.setContentType("text/html");
           String resultString = uiResponse.render();
           response.setContent(resultString);
-
         }
       }
       response.end();

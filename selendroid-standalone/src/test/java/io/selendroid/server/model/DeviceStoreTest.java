@@ -13,6 +13,10 @@
  */
 package io.selendroid.server.model;
 
+import static io.selendroid.server.model.DeviceStoreFixture.anDevice;
+import static io.selendroid.server.model.DeviceStoreFixture.anDeviceManager;
+import static io.selendroid.server.model.DeviceStoreFixture.anEmulator;
+import static io.selendroid.server.model.DeviceStoreFixture.withDefaultCapabilities;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
@@ -34,6 +38,7 @@ import io.selendroid.exceptions.DeviceStoreException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -46,10 +51,10 @@ public class DeviceStoreTest {
   private static final Integer EMULATOR_PORT = 5560;
 
   @Test
-  public void testShouldBeAbleToRegisterSingleNotStatedEmulator() throws Exception {
+  public void shouldAddStartedEmulator() throws Exception {
     AndroidEmulator emulator = anEmulator("de", DeviceTargetPlatform.ANDROID10, false);
 
-    DeviceStore deviceStore = new DeviceStore(false, EMULATOR_PORT);
+    DeviceStore deviceStore = new DeviceStore(false, EMULATOR_PORT, anDeviceManager());
     deviceStore.addEmulators(Collections.singletonList(emulator));
     Assert.assertEquals(deviceStore.getDevicesInUse().size(), 0);
     Assert.assertEquals(deviceStore.getDevicesList().size(), 1);
@@ -60,21 +65,21 @@ public class DeviceStoreTest {
   }
 
   @Test
-  public void testShouldBeAbleToIncrementEmulatorPortsByTwo() {
-    DeviceStore deviceStore = new DeviceStore(false, EMULATOR_PORT);
+  public void shouldIncrementEmulatorPortsByTwo() throws Exception {
+    DeviceStore deviceStore = new DeviceStore(false, EMULATOR_PORT, anDeviceManager());
     Assert.assertEquals(5560, deviceStore.nextEmulatorPort().intValue());
     Assert.assertEquals(5562, deviceStore.nextEmulatorPort().intValue());
     Assert.assertEquals(5564, deviceStore.nextEmulatorPort().intValue());
   }
 
   @Test
-  public void testShouldBeAbleToReleaseActiveEmulators() throws Exception {
+  public void shouldReleaseActiveEmulators() throws Exception {
     AndroidEmulator deEmulator = anEmulator("de", DeviceTargetPlatform.ANDROID16, false);
     when(deEmulator.getPort()).thenReturn(5554);
 
     EmulatorPortFinder finder = mock(EmulatorPortFinder.class);
     when(finder.next()).thenReturn(5554);
-    DeviceStore deviceStore = new DeviceStore(finder, false);
+    DeviceStore deviceStore = new DeviceStore(finder, false, anDeviceManager());
     deviceStore.addEmulators(Arrays.asList(new AndroidEmulator[] {deEmulator}));
     Assert.assertEquals(deviceStore.getDevicesInUse().size(), 0);
     AndroidDevice foundDevice = deviceStore.findAndroidDevice(withDefaultCapabilities());
@@ -89,12 +94,12 @@ public class DeviceStoreTest {
   }
 
   @Test
-  public void testShouldBeAbleToRegisterMultipleNotStatedEmulators() throws Exception {
+  public void shouldRegisterMultipleNotStatedEmulators() throws Exception {
     AndroidEmulator deEmulator10 = anEmulator("de", DeviceTargetPlatform.ANDROID10, false);
     AndroidEmulator enEmulator10 = anEmulator("en", DeviceTargetPlatform.ANDROID10, false);
     AndroidEmulator deEmulator16 = anEmulator("de", DeviceTargetPlatform.ANDROID16, false);
 
-    DeviceStore deviceStore = new DeviceStore(false, EMULATOR_PORT);
+    DeviceStore deviceStore = new DeviceStore(false, EMULATOR_PORT, anDeviceManager());
     deviceStore.addEmulators(Arrays.asList(new AndroidEmulator[] {deEmulator10, enEmulator10,
         deEmulator16}));
     Assert.assertEquals(deviceStore.getDevicesInUse().size(), 0);
@@ -111,37 +116,46 @@ public class DeviceStoreTest {
   }
 
   @Test
-  public void testShouldBeAbleToRegisterMSingleNotStarteEmulatorAndSkipOthers() throws Exception {
+  public void shouldRegisterStartedAndStoppedEmulators() throws Exception {
     AndroidEmulator deEmulator10 = anEmulator("de", DeviceTargetPlatform.ANDROID10, false);
     AndroidEmulator enEmulator10 = anEmulator("en", DeviceTargetPlatform.ANDROID10, true);
     AndroidEmulator deEmulator16 = anEmulator("de", DeviceTargetPlatform.ANDROID16, true);
 
-    DeviceStore deviceStore = new DeviceStore(false, EMULATOR_PORT);
+    DeviceStore deviceStore = new DeviceStore(false, EMULATOR_PORT, anDeviceManager());
     deviceStore.addEmulators(Arrays.asList(new AndroidEmulator[] {deEmulator10, enEmulator10,
         deEmulator16}));
     Assert.assertEquals(deviceStore.getDevicesInUse().size(), 0);
-    Assert.assertEquals(deviceStore.getDevicesList().size(), 1);
 
-    Assert.assertTrue(deviceStore.getDevicesList().containsKey(DeviceTargetPlatform.ANDROID10));
-    Assert.assertTrue(deviceStore.getDevicesList().get(DeviceTargetPlatform.ANDROID10)
-        .contains(deEmulator10));
+    Assert.assertTrue("Should have an entry for target version 10.", deviceStore.getDevicesList()
+        .containsKey(DeviceTargetPlatform.ANDROID10));
+    List<AndroidDevice> devicesApi10 =
+        deviceStore.getDevicesList().get(DeviceTargetPlatform.ANDROID10);
+    Assert.assertTrue("Entry of target version 10 should contain de emulator.",
+        devicesApi10.contains(deEmulator10));
+    Assert.assertTrue("Entry of target version 10 should contain en emulator.",
+        devicesApi10.contains(enEmulator10));
+
+    Assert.assertTrue("Should have an entry for target version 16.", deviceStore.getDevicesList()
+        .containsKey(DeviceTargetPlatform.ANDROID16));
+    Assert.assertTrue("Entry of target version 16 should contain the emulator.", deviceStore
+        .getDevicesList().get(DeviceTargetPlatform.ANDROID16).contains(deEmulator16));
   }
 
   @Test
-  public void testShouldBeAbleToInitStoreWhenAllEmulatorsAreRunningAlready() throws Exception {
+  public void shouldNotIgnoreRunningEmulators() throws Exception {
     AndroidEmulator enEmulator10 = anEmulator("en", DeviceTargetPlatform.ANDROID10, true);
     AndroidEmulator deEmulator16 = anEmulator("de", DeviceTargetPlatform.ANDROID16, true);
 
-    DeviceStore deviceStore = new DeviceStore(false, EMULATOR_PORT);
+    DeviceStore deviceStore = new DeviceStore(false, EMULATOR_PORT, anDeviceManager());
     deviceStore.addEmulators(Arrays.asList(new AndroidEmulator[] {enEmulator10, deEmulator16}));
 
     // Nothing has been added.
-    Assert.assertEquals(deviceStore.getDevicesList().size(), 0);
+    Assert.assertEquals(deviceStore.getDevicesList().size(), 2);
   }
 
   @Test
   public void storeShouldDoNothingIfInitializedWithEmptyList() throws AndroidDeviceException {
-    DeviceStore store = new DeviceStore(false, EMULATOR_PORT);
+    DeviceStore store = new DeviceStore(false, EMULATOR_PORT, anDeviceManager());
 
     store.addEmulators(new ArrayList<AndroidEmulator>());
     Assert.assertEquals(store.getDevicesList().size(), 0);
@@ -149,40 +163,19 @@ public class DeviceStoreTest {
 
   @Test
   public void storeShouldDoNothingIfInitializedWithNull() throws AndroidDeviceException {
-    DeviceStore store = new DeviceStore(false, EMULATOR_PORT);
+    DeviceStore store = new DeviceStore(false, EMULATOR_PORT, anDeviceManager());
 
     store.addEmulators(null);
     Assert.assertEquals(store.getDevicesList().size(), 0);
   }
 
-  private DefaultAndroidEmulator anEmulator(String name, DeviceTargetPlatform platform,
-      boolean isEmulatorStarted) throws AndroidDeviceException {
-    DefaultAndroidEmulator emulator = mock(DefaultAndroidEmulator.class);
-    when(emulator.getAvdName()).thenReturn(name);
-    when(emulator.getTargetPlatform()).thenReturn(platform);
-    when(emulator.isEmulatorStarted()).thenReturn(isEmulatorStarted);
-    when(emulator.isDeviceReady()).thenReturn(false);
-    when(emulator.screenSizeMatches("320x480")).thenReturn(true);
 
-    return emulator;
-  }
-
-  private DefaultHardwareDevice anDevice(String name, DeviceTargetPlatform platform)
-      throws AndroidDeviceException {
-    DefaultHardwareDevice device = mock(DefaultHardwareDevice.class);
-    when(device.getModel()).thenReturn(name);
-    when(device.getTargetPlatform()).thenReturn(platform);
-    when(device.isDeviceReady()).thenReturn(true);
-    when(device.screenSizeMatches("320x480")).thenReturn(true);
-
-    return device;
-  }
 
   @Test
-  public void storeShouldBeAbleToFindDeviceForCapabilities() throws Exception {
+  public void shouldFindSwitchedOffEmulator() throws Exception {
     // prepare device store
     DefaultAndroidEmulator deEmulator16 = anEmulator("de", DeviceTargetPlatform.ANDROID16, false);
-    DeviceStore deviceStore = new DeviceStore(false, EMULATOR_PORT);
+    DeviceStore deviceStore = new DeviceStore(false, EMULATOR_PORT, anDeviceManager());
     deviceStore.addEmulators(Arrays.asList(new AndroidEmulator[] {deEmulator16}));
 
     // find by Capabilities
@@ -194,10 +187,10 @@ public class DeviceStoreTest {
   }
 
   @Test
-  public void storeShouldThrowAnExceptionIfTargetPlatformIsMissingInCapabilities() throws Exception {
+  public void shouldThrowAnExceptionIfTargetPlatformIsMissingInCapabilities() throws Exception {
     // prepare device store
     DefaultAndroidEmulator deEmulator16 = anEmulator("de", DeviceTargetPlatform.ANDROID16, false);
-    DeviceStore deviceStore = new DeviceStore(false, EMULATOR_PORT);
+    DeviceStore deviceStore = new DeviceStore(false, EMULATOR_PORT, anDeviceManager());
     deviceStore.addEmulators(Arrays.asList(new AndroidEmulator[] {deEmulator16}));
 
     SelendroidCapabilities capa = new SelendroidCapabilities();
@@ -213,11 +206,11 @@ public class DeviceStoreTest {
   }
 
   @Test
-  public void storeShouldNotBeAbleToFindDeviceIfTargetPlatformIsNotSuported() throws Exception {
+  public void shouldNotFindDeviceIfTargetPlatformIsNotSuported() throws Exception {
     // prepare device store
     DefaultAndroidEmulator deEmulator10 = anEmulator("de", DeviceTargetPlatform.ANDROID10, false);
     AndroidEmulator enEmulator10 = anEmulator("en", DeviceTargetPlatform.ANDROID10, false);
-    DeviceStore deviceStore = new DeviceStore(false, EMULATOR_PORT);
+    DeviceStore deviceStore = new DeviceStore(false, EMULATOR_PORT, anDeviceManager());
     deviceStore.addEmulators(Arrays.asList(new AndroidEmulator[] {deEmulator10, enEmulator10}));
 
     // find by Capabilities
@@ -234,11 +227,11 @@ public class DeviceStoreTest {
   }
 
   @Test
-  public void storeShouldNotBeAbleToFindDeviceIfScreenSizeIsNotSupported() throws Exception {
+  public void shouldNotFindDeviceIfScreenSizeIsNotSupported() throws Exception {
     // prepare device store
     DefaultAndroidEmulator deEmulator10 = anEmulator("de", DeviceTargetPlatform.ANDROID16, false);
     AndroidEmulator enEmulator10 = anEmulator("en", DeviceTargetPlatform.ANDROID10, false);
-    DeviceStore deviceStore = new DeviceStore(false, EMULATOR_PORT);
+    DeviceStore deviceStore = new DeviceStore(false, EMULATOR_PORT, anDeviceManager());
     deviceStore.addEmulators(Arrays.asList(new AndroidEmulator[] {deEmulator10, enEmulator10}));
 
     // find by Capabilities
@@ -255,12 +248,7 @@ public class DeviceStoreTest {
     assertThat(deviceStore.getDevicesList().values(), hasSize(2));
   }
 
-  protected SelendroidCapabilities withDefaultCapabilities() {
-    SelendroidCapabilities capabilities = new SelendroidCapabilities();
-    capabilities.setAndroidTarget(DeviceTargetPlatform.ANDROID16.name());
-    capabilities.setScreenSize("320x480");
-    return capabilities;
-  }
+
 
   @Test
   public void testShouldBeAbleToAddDevices() throws Exception {
@@ -268,7 +256,7 @@ public class DeviceStoreTest {
     when(device.getTargetPlatform()).thenReturn(DeviceTargetPlatform.ANDROID16);
     when(device.isDeviceReady()).thenReturn(Boolean.TRUE);
 
-    DeviceStore store = new DeviceStore(false, EMULATOR_PORT);
+    DeviceStore store = new DeviceStore(false, EMULATOR_PORT, anDeviceManager());
     store.addDevice(device);
     assertThat(store.getDevicesList().values(), hasSize(1));
     assertThat(store.getDevicesInUse(), hasSize(0));
@@ -276,26 +264,26 @@ public class DeviceStoreTest {
   }
 
   @Test
-  public void testShouldNotBeAbleToAddNotReadyDevice() throws Exception {
+  public void shouldIgnoreNotReadyDevices() throws Exception {
     AndroidDevice device = mock(AndroidDevice.class);
     when(device.getTargetPlatform()).thenReturn(DeviceTargetPlatform.ANDROID16);
     when(device.isDeviceReady()).thenReturn(Boolean.FALSE);
 
-    DeviceStore store = new DeviceStore(false, EMULATOR_PORT);
+    DeviceStore store = new DeviceStore(false, EMULATOR_PORT, anDeviceManager());
     store.addDevice(device);
     assertThat(store.getDevicesList().values(), hasSize(0));
     assertThat(store.getDevicesInUse(), hasSize(0));
   }
 
   @Test
-  public void testShouldBeAbleToFindRealDeviceForCapabilities() throws Exception {
+  public void shouldFindRealDeviceForCapabilities() throws Exception {
     AndroidDevice device = mock(DefaultHardwareDevice.class);
     when(device.getTargetPlatform()).thenReturn(DeviceTargetPlatform.ANDROID16);
     when(device.isDeviceReady()).thenReturn(Boolean.TRUE);
     when(device.getScreenSize()).thenReturn("320x480");
     when(device.screenSizeMatches("320x480")).thenReturn(Boolean.TRUE);
 
-    DeviceStore store = new DeviceStore(false, EMULATOR_PORT);
+    DeviceStore store = new DeviceStore(false, EMULATOR_PORT, anDeviceManager());
     store.addDevice(device);
     assertThat(store.getDevicesList().values(), hasSize(1));
     assertThat(store.getDevicesInUse(), hasSize(0));
@@ -307,14 +295,14 @@ public class DeviceStoreTest {
   }
 
   @Test
-  public void testShouldNotBeAbleToFindRealDeviceForCapabilities() throws Exception {
+  public void shouldNotFindRealDeviceForCapabilities() throws Exception {
     AndroidDevice device = mock(AndroidDevice.class);
     when(device.getTargetPlatform()).thenReturn(DeviceTargetPlatform.ANDROID16);
     when(device.isDeviceReady()).thenReturn(Boolean.TRUE);
     when(device.getScreenSize()).thenReturn("320x500");
     when(device.screenSizeMatches("320x500")).thenReturn(Boolean.FALSE);
 
-    DeviceStore store = new DeviceStore(false, EMULATOR_PORT);
+    DeviceStore store = new DeviceStore(false, EMULATOR_PORT, anDeviceManager());
     store.addDevice(device);
     assertThat(store.getDevicesList().values(), hasSize(1));
     assertThat(store.getDevicesInUse(), hasSize(0));
@@ -329,9 +317,9 @@ public class DeviceStoreTest {
   }
 
   @Test
-  public void testShouldBeAbleToRemoveAHardwareDevice() throws Exception {
+  public void shouldRemoveHardwareDevice() throws Exception {
     DefaultHardwareDevice device = anDevice("de", DeviceTargetPlatform.ANDROID16);
-    DeviceStore store = new DeviceStore(false, EMULATOR_PORT);
+    DeviceStore store = new DeviceStore(false, EMULATOR_PORT, anDeviceManager());
     store.addDevice(device);
     assertThat(store.getDevicesList().values(), hasSize(1));
     store.removeAndroidDevice(device);
@@ -339,9 +327,9 @@ public class DeviceStoreTest {
   }
 
   @Test
-  public void testShouldNotBeAbleToRemoveAnEmulator() throws Exception {
+  public void shouldNotRemoveAnEmulator() throws Exception {
     DefaultAndroidEmulator deEmulator10 = anEmulator("de", DeviceTargetPlatform.ANDROID16, false);
-    DeviceStore store = new DeviceStore(false, EMULATOR_PORT);
+    DeviceStore store = new DeviceStore(false, EMULATOR_PORT, anDeviceManager());
     store.addEmulators(Arrays.asList(new AndroidEmulator[] {deEmulator10}));
 
     assertThat(store.getDevicesList().values(), hasSize(1));
@@ -351,5 +339,20 @@ public class DeviceStoreTest {
     } catch (DeviceStoreException e) {
       // expected
     }
+  }
+
+  @Test
+  public void shouldFindStartedEmulator() throws Exception {
+    // prepare device store
+    DefaultAndroidEmulator deEmulator16 = anEmulator("de", DeviceTargetPlatform.ANDROID16, true);
+    DeviceStore deviceStore = new DeviceStore(false, EMULATOR_PORT, anDeviceManager());
+    deviceStore.addEmulators(Arrays.asList(new AndroidEmulator[] {deEmulator16}));
+
+    // find by Capabilities
+    AndroidDevice device = deviceStore.findAndroidDevice(withDefaultCapabilities());
+    // The right device is found
+    assertThat(device, equalTo((AndroidDevice) deEmulator16));
+    // the device is in use when found
+    assertThat(deviceStore.getDevicesInUse(), contains((AndroidDevice) deEmulator16));
   }
 }

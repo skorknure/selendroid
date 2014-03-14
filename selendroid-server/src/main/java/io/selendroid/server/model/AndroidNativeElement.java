@@ -96,7 +96,7 @@ public class AndroidNativeElement implements AndroidElement {
     // In the past we used `getView().isShown()` to identify if the element
     // is displayed. It seems like that it is better to look just at the
     // visibility of the view instead of verifying the ancestors as well.
-    boolean isElementDisplayed = View.VISIBLE == getView().getVisibility();
+    boolean isElementDisplayed = (View.VISIBLE == getView().getVisibility()) && getView().isShown();
 
 
     return hasWindowFocus && enabled && isElementDisplayed && (width > 0) && (height > 0);
@@ -150,6 +150,16 @@ public class AndroidNativeElement implements AndroidElement {
 
   @Override
   public void enterText(CharSequence... keysToSend) {
+    requestFocus();
+
+    StringBuilder sb = new StringBuilder();
+    for (CharSequence keys : keysToSend) {
+      sb.append(keys);
+    }
+    send(sb);
+  }
+
+  private void requestFocus() {
     final View viewview = getView();
     instrumentation.runOnMainSync(new Runnable() {
       @Override
@@ -158,12 +168,6 @@ public class AndroidNativeElement implements AndroidElement {
       }
     });
     click();
-
-    StringBuilder sb = new StringBuilder();
-    for (CharSequence keys : keysToSend) {
-      sb.append(keys);
-    }
-    send(sb.toString());
   }
 
   @Override
@@ -257,9 +261,13 @@ public class AndroidNativeElement implements AndroidElement {
     JSONObject l10n = new JSONObject();
     l10n.put("matches", 0);
     object.put("l10n", l10n);
-    
-    String label = String.valueOf(getView().getContentDescription());
-    object.put("name", label == null ? "" : label);
+    CharSequence cd = getView().getContentDescription();
+    if (cd != null && cd.length() > 0) {
+      String label = String.valueOf(cd);
+      object.put("name", label);
+    } else {
+      object.put("name", "");
+    }
     String id = getNativeId();
     object.put("id", id.startsWith("id/") ? id.replace("id/", "") : id);
     JSONObject rect = new JSONObject();
@@ -500,5 +508,22 @@ public class AndroidNativeElement implements AndroidElement {
   @Override
   public String getTagName() {
     return getView().getClass().getSimpleName();
+  }
+
+  @Override
+  public void setText(CharSequence... keysToSend) {
+    requestFocus();
+    final View viewview = getView();
+    StringBuilder sb = new StringBuilder();
+    for (CharSequence keys : keysToSend) {
+      sb.append(keys);
+    }
+    final String text = getText() + sb;
+    instrumentation.runOnMainSync(new Runnable() {
+      @Override
+      public void run() {
+        ((EditText) viewview).setText(text);
+      }
+    });
   }
 }

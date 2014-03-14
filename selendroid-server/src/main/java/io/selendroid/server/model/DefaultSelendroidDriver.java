@@ -14,6 +14,7 @@
 package io.selendroid.server.model;
 
 import io.selendroid.ServerInstrumentation;
+import io.selendroid.android.AndroidTouchScreen;
 import io.selendroid.android.AndroidWait;
 import io.selendroid.android.InstrumentedKeySender;
 import io.selendroid.android.KeySender;
@@ -22,7 +23,7 @@ import io.selendroid.android.WindowType;
 import io.selendroid.android.internal.Dimension;
 import io.selendroid.exceptions.NoSuchElementException;
 import io.selendroid.exceptions.SelendroidException;
-import io.selendroid.server.Session;
+import io.selendroid.server.inspector.TreeUtil;
 import io.selendroid.server.model.internal.AbstractNativeElementContext;
 import io.selendroid.server.model.internal.AbstractWebElementContext;
 import io.selendroid.server.model.internal.execute_native.FindElementByAndroidTag;
@@ -31,6 +32,7 @@ import io.selendroid.server.model.internal.execute_native.GetL10nKeyTranslation;
 import io.selendroid.server.model.internal.execute_native.InvokeMenuAction;
 import io.selendroid.server.model.internal.execute_native.IsElementDisplayedInViewport;
 import io.selendroid.server.model.internal.execute_native.NativeExecuteScript;
+import io.selendroid.server.model.internal.execute_native.TwoPointerGestureAction;
 import io.selendroid.server.model.js.AndroidAtoms;
 import io.selendroid.util.Preconditions;
 import io.selendroid.util.SelendroidLogger;
@@ -84,6 +86,7 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
   private SelendroidNativeDriver selendroidNativeDriver = null;
   private SelendroidWebDriver selendroidWebDriver = null;
   private String activeWindowType = null;
+  private long scriptTimeout = 0L;
 
   private Map<String, NativeExecuteScript> nativeExecuteScriptMap =
       new HashMap<String, NativeExecuteScript>();
@@ -186,7 +189,7 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
       }
       copy.put(TAKES_SCREENSHOT, true);
       copy.put(BROWSER_NAME, "selendroid");
-      copy.put(ROTATABLE, false);
+      copy.put(ROTATABLE, true);
       copy.put(PLATFORM, "android");
       copy.put(SUPPORTS_ALERTS, true);
       copy.put(SUPPORTS_JAVASCRIPT, true);
@@ -348,10 +351,11 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
   }
 
   private void initSelendroidWebDriver(String type) {
-    this.selendroidWebDriver = new SelendroidWebDriver(serverInstrumentation, type);
+    selendroidWebDriver = new SelendroidWebDriver(serverInstrumentation, type);
     webviewSearchScope =
         new WebviewSearchScope(session.getKnownElements(), selendroidWebDriver.getWebview(),
             selendroidWebDriver);
+    selendroidWebDriver.setAsyncScriptTimeout(scriptTimeout);
   }
 
   /*
@@ -369,8 +373,8 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
     }
     activeWindowType = WindowType.NATIVE_APP.name();
     Random random = new Random();
-    this.session = new Session(desiredCapabilities,
-        new UUID(random.nextLong(), random.nextLong()).toString());
+    this.session =
+        new Session(desiredCapabilities, new UUID(random.nextLong(), random.nextLong()).toString());
     nativeSearchScope =
         new NativeSearchScope(serverInstrumentation, getSession().getKnownElements());
 
@@ -387,6 +391,7 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
         new FindElementByAndroidTag(session.getKnownElements(), serverInstrumentation, keySender));
     nativeExecuteScriptMap.put("isElementDisplayedInViewport", new IsElementDisplayedInViewport(
         session.getKnownElements(), serverInstrumentation));
+   nativeExecuteScriptMap.put("TwoPointerGesture", new TwoPointerGestureAction((AndroidTouchScreen) selendroidNativeDriver.getTouch()));
 
     return session.getSessionId();
   }
@@ -481,15 +486,27 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
     }
   }
 
+
+
   @Override
-  public Object getWindowSource() {
-    Object source = null;
+  public String getWindowSource() {
     try {
-      // if (isNativeWindowMode()) {
+      if (isNativeWindowMode()) {
+        JSONObject uiTree = selendroidNativeDriver.getWindowSource();
+        return TreeUtil.getXMLSource(uiTree);
+      } else {
+        return selendroidWebDriver.getWindowSource();
+      }
+    } catch (JSONException e) {
+      throw new SelendroidException("Exception while generating source tree.", e);
+    }
+  }
+
+  @Override
+  public JSONObject getFullWindowTree() {
+    JSONObject source = null;
+    try {
       source = selendroidNativeDriver.getWindowSource();
-      // } else {
-      // source = selendroidWebDriver.getWindowSource();
-      // }
     } catch (JSONException e) {
       throw new SelendroidException(e);
     }
@@ -513,6 +530,38 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
       selendroidWebDriver.get(url);
     }
     getSession().getKnownElements().clear();
+  }
+
+  public ScreenOrientation getOrientation() {
+    Activity activity = serverInstrumentation.getCurrentActivity();
+
+    int value = activity.getRequestedOrientation();
+    if (value == 0) {
+      return ScreenOrientation.LANDSCAPE;
+    }
+    return ScreenOrientation.PORTRAIT;
+  }
+
+  public void rotate(final ScreenOrientation orientation) {
+    final Activity activity = serverInstrumentation.getCurrentActivity();
+    final int screenOrientation = getAndroidScreenOrientation(orientation);
+    if (activity != null) {
+      activity.runOnUiThread(new Runnable() {
+
+        @Override
+        public void run() {
+          activity.setRequestedOrientation(screenOrientation);
+        }
+      });
+      serverInstrumentation.waitForIdleSync();
+    }
+  }
+
+  private int getAndroidScreenOrientation(ScreenOrientation orientation) {
+    if (ScreenOrientation.LANDSCAPE.equals(orientation)) {
+      return 0;
+    }
+    return 1;
   }
 
   public boolean isNativeWindowMode() {
@@ -543,8 +592,16 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
     return executeScript(script, array);
   }
 
+  public Object executeAsyncScript(String script, JSONArray args) {
+    if (isNativeWindowMode()) {
+      throw new UnsupportedOperationException(
+          "Executing arbitrary script is only available in web views.");
+    }
+    return selendroidWebDriver.executeAsyncJavascript(script, args, session.getKnownElements());
+  }
+
   @Override
-  public String getWindowHandle() {
+  public String getContext() {
     return activeWindowType;
   }
 
@@ -559,7 +616,7 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
   }
 
   @Override
-  public Set<String> getWindowHandles() {
+  public Set<String> getContexts() {
     Set<String> windowHandles = new HashSet<String>();
     windowHandles.add(WindowType.NATIVE_APP.name());
     List<WebView> webview = ViewHierarchyAnalyzer.getDefaultInstance().findWebViews();
@@ -648,6 +705,7 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
     }
   }
 
+
   public boolean isAlertPresent() {
     if (isNativeWindowMode() || selendroidWebDriver == null) {
       // alert handling is not done in 'native' mode
@@ -696,5 +754,12 @@ public class DefaultSelendroidDriver implements SelendroidDriver {
       activeWindowType = previousActiveWindow;
     }
     return null;
+  }
+
+  public void setAsyncTimeout(long timeout) {
+    scriptTimeout = timeout;
+    if (selendroidWebDriver != null) {
+      selendroidWebDriver.setAsyncScriptTimeout(timeout);
+    }
   }
 }

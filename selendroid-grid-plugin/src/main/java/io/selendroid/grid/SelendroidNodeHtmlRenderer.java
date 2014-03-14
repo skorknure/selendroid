@@ -27,9 +27,6 @@ import org.openqa.selenium.remote.DesiredCapabilities;
  */
 public class SelendroidNodeHtmlRenderer implements HtmlRenderer {
   public static final String BROWSER_NAME = "selendroid";
-  public static final String LOCALE = "locale";
-  public static final String SDK_VERSION = "sdkVersion";
-  public static final String AUT = "aut";
 
   private SelendroidSessionProxy proxy;
 
@@ -57,7 +54,7 @@ public class SelendroidNodeHtmlRenderer implements HtmlRenderer {
       String icon = null;
 
       if (BROWSER_NAME.equals(slot.getCapabilities().get(RegistrationRequest.BROWSER))) {
-        icon = "android";
+        icon = "selendroid";
       } else {
         icon =
             BrowserNameUtils.consoleIconName(new DesiredCapabilities(slot.getCapabilities()),

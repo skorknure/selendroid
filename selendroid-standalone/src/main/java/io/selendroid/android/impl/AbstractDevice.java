@@ -18,6 +18,7 @@ import io.selendroid.android.AndroidDevice;
 import io.selendroid.android.AndroidSdk;
 import io.selendroid.exceptions.AndroidDeviceException;
 import io.selendroid.exceptions.AndroidSdkException;
+import io.selendroid.exceptions.SelendroidException;
 import io.selendroid.exceptions.ShellCommandException;
 import io.selendroid.io.ShellCommand;
 
@@ -33,7 +34,11 @@ import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 
-import org.apache.commons.exec.*;
+import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DefaultExecuteResultHandler;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.ExecuteWatchdog;
+import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -104,29 +109,28 @@ public abstract class AbstractDevice implements AndroidDevice {
   }
 
   @Override
-  public boolean isInstalled(AndroidApp app) throws AndroidSdkException {
+  public boolean isInstalled(String appBasePackage) throws AndroidSdkException {
     CommandLine command = adbCommand("shell", "pm", "list", "packages");
-    String apkPackage = app.getBasePackage();
-    command.addArgument(apkPackage, false);
+
+    command.addArgument(appBasePackage, false);
     String result = null;
     try {
       result = ShellCommand.exec(command, 20000);
     } catch (ShellCommandException e) {}
-    if (result != null && result.contains(apkPackage)) {
+    if (result != null && result.contains(appBasePackage)) {
       return true;
     }
-    if (app instanceof InstalledAndroidApp) {
-      throw new RuntimeException("The specified app is not installed on the device: "
-          + app.getAppId());
-    }
+
     return false;
   }
 
   @Override
+  public boolean isInstalled(AndroidApp app) throws AndroidSdkException {
+    return isInstalled(app.getBasePackage());
+  }
+
+  @Override
   public Boolean install(AndroidApp app) {
-    if (app instanceof InstalledAndroidApp) {
-      return true;
-    }
     CommandLine command = adbCommand("install", app.getAbsolutePath());
 
     String out = executeCommand(command, 120000);
@@ -170,9 +174,6 @@ public abstract class AbstractDevice implements AndroidDevice {
 
   @Override
   public void uninstall(AndroidApp app) throws AndroidSdkException {
-    if (app instanceof InstalledAndroidApp) {
-      return;
-    }
     CommandLine command = adbCommand("uninstall", app.getBasePackage());
 
     executeCommand(command, 20000);
@@ -196,7 +197,7 @@ public abstract class AbstractDevice implements AndroidDevice {
     CommandLine command = adbCommand("shell", "am", "force-stop", aut.getBasePackage());
     executeCommand(command, 20000);
 
-    if(logcatWatchdog != null && logcatWatchdog.isWatching()) {
+    if (logcatWatchdog != null && logcatWatchdog.isWatching()) {
       logcatWatchdog.destroyProcess();
       logcatWatchdog = null;
     }
@@ -206,10 +207,15 @@ public abstract class AbstractDevice implements AndroidDevice {
   public void startSelendroid(AndroidApp aut, int port) throws AndroidSdkException {
     this.port = port;
 
-    CommandLine command = adbCommand("shell", "am", "instrument", "-e", "main_activity",
-        aut.getMainActivity(), "-e", "server_port", port + "",
-        "io.selendroid." + aut.getBasePackage() + "/io.selendroid.ServerInstrumentation");
-    executeCommand(command, 20000);
+    CommandLine command =
+        adbCommand("shell", "am", "instrument", "-e", "main_activity", aut.getMainActivity(), "-e",
+            "server_port", port + "", "io.selendroid." + aut.getBasePackage()
+                + "/io.selendroid.ServerInstrumentation");
+    String result = executeCommand(command, 20000);
+    if (result.contains("FAILED")) {
+      throw new SelendroidException("Error occured while starting selendroid-server on the device",
+          new Throwable(result));
+    }
 
     forwardSelendroidPort(port);
     startLogging();
@@ -287,9 +293,10 @@ public abstract class AbstractDevice implements AndroidDevice {
     logoutput = new ByteArrayOutputStream();
     DefaultExecutor exec = new DefaultExecutor();
     exec.setStreamHandler(new PumpStreamHandler(logoutput));
-    CommandLine command = adbCommand("logcat", "-v", "time");
-    System.out.println("starting logcat:");
-    System.out.println(command.toString());
+    CommandLine command = adbCommand("logcat", "ResourceType:S", "dalvikvm:S", "Trace:S", "SurfaceFlinger:S",
+        "StrictMode:S", "ExchangeService:S", "SVGAndroid:S", "skia:S", "LoaderManager:S", "ActivityThread:S", "-v", "time");
+    log.info("starting logcat:");
+    log.fine(command.toString());
     try {
       exec.execute(command, new DefaultExecuteResultHandler());
       logcatWatchdog = new ExecuteWatchdog(ExecuteWatchdog.INFINITE_TIMEOUT);
@@ -340,6 +347,9 @@ public abstract class AbstractDevice implements AndroidDevice {
   }
 
   public byte[] takeScreenshot() throws AndroidDeviceException {
+    if (device == null) {
+      throw new AndroidDeviceException("Device not accessible via ddmlib.");
+    }
     RawImage rawImage;
     try {
       rawImage = device.getScreenshot();

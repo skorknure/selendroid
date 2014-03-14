@@ -25,7 +25,8 @@ import io.selendroid.server.handler.DeleteSession;
 import io.selendroid.server.handler.DoubleTapOnElement;
 import io.selendroid.server.handler.Down;
 import io.selendroid.server.handler.ElementLocation;
-import io.selendroid.server.handler.ExecuteScript;
+import io.selendroid.server.handler.script.ExecuteAsyncScript;
+import io.selendroid.server.handler.script.ExecuteScript;
 import io.selendroid.server.handler.FindChildElement;
 import io.selendroid.server.handler.FindChildElements;
 import io.selendroid.server.handler.FindElement;
@@ -33,6 +34,7 @@ import io.selendroid.server.handler.FindElements;
 import io.selendroid.server.handler.Flick;
 import io.selendroid.server.handler.FrameSwitchHandler;
 import io.selendroid.server.handler.GetCapabilities;
+import io.selendroid.server.handler.GetCommandConfiguration;
 import io.selendroid.server.handler.GetCookies;
 import io.selendroid.server.handler.GetCurrentUrl;
 import io.selendroid.server.handler.GetElementAttribute;
@@ -42,10 +44,11 @@ import io.selendroid.server.handler.GetElementSelected;
 import io.selendroid.server.handler.GetElementSize;
 import io.selendroid.server.handler.GetElementTagName;
 import io.selendroid.server.handler.GetPageTitle;
+import io.selendroid.server.handler.GetScreenOrientation;
 import io.selendroid.server.handler.GetScreenState;
 import io.selendroid.server.handler.GetText;
-import io.selendroid.server.handler.GetWindowHandle;
-import io.selendroid.server.handler.GetWindowHandles;
+import io.selendroid.server.handler.GetContext;
+import io.selendroid.server.handler.GetContexts;
 import io.selendroid.server.handler.GetWindowSize;
 import io.selendroid.server.handler.GoBack;
 import io.selendroid.server.handler.GoForward;
@@ -58,23 +61,28 @@ import io.selendroid.server.handler.Move;
 import io.selendroid.server.handler.NewSession;
 import io.selendroid.server.handler.OpenUrl;
 import io.selendroid.server.handler.Refresh;
+import io.selendroid.server.handler.RotateScreen;
 import io.selendroid.server.handler.Scroll;
 import io.selendroid.server.handler.SendKeyToActiveElement;
 import io.selendroid.server.handler.SendKeys;
-import io.selendroid.server.handler.SetImplicitWaitTimeout;
+import io.selendroid.server.handler.SetCommandConfiguration;
+import io.selendroid.server.handler.timeouts.AsyncTimeoutHandler;
+import io.selendroid.server.handler.timeouts.SetImplicitWaitTimeout;
 import io.selendroid.server.handler.SetScreenState;
 import io.selendroid.server.handler.SingleTapOnElement;
 import io.selendroid.server.handler.SubmitForm;
-import io.selendroid.server.handler.SwitchWindow;
+import io.selendroid.server.handler.SwitchContext;
 import io.selendroid.server.handler.UnknownCommandHandler;
 import io.selendroid.server.handler.Up;
 import io.selendroid.server.handler.alert.Alert;
 import io.selendroid.server.handler.alert.AlertAccept;
 import io.selendroid.server.handler.alert.AlertDismiss;
 import io.selendroid.server.handler.alert.AlertSendKeys;
+import io.selendroid.server.handler.timeouts.TimeoutsHandler;
 import io.selendroid.server.model.DefaultSelendroidDriver;
 import io.selendroid.server.model.SelendroidDriver;
 import io.selendroid.util.SelendroidLogger;
+
 import org.webbitserver.HttpRequest;
 
 public class AndroidServlet extends BaseServlet {
@@ -101,10 +109,12 @@ public class AndroidServlet extends BaseServlet {
     register(postHandler, new AlertDismiss("/wd/hub/session/:sessionId/dismiss_alert"));
     register(postHandler, new FindElement("/wd/hub/session/:sessionId/element"));
     register(postHandler, new FindElements("/wd/hub/session/:sessionId/elements"));
-    register(getHandler, new GetElementAttribute("/wd/hub/session/:sessionId/element/:id/attribute/:name"));
+    register(getHandler, new GetElementAttribute(
+        "/wd/hub/session/:sessionId/element/:id/attribute/:name"));
     register(postHandler, new ClearElement("/wd/hub/session/:sessionId/element/:id/clear"));
     register(postHandler, new ClickElement("/wd/hub/session/:sessionId/element/:id/click"));
-    register(getHandler, new GetElementDisplayed("/wd/hub/session/:sessionId/element/:id/displayed"));
+    register(getHandler,
+        new GetElementDisplayed("/wd/hub/session/:sessionId/element/:id/displayed"));
     register(postHandler, new FindChildElement("/wd/hub/session/:sessionId/element/:id/element"));
     register(postHandler, new FindChildElements("/wd/hub/session/:sessionId/element/:id/elements"));
     register(getHandler, new GetElementEnabled("/wd/hub/session/:sessionId/element/:id/enabled"));
@@ -117,21 +127,28 @@ public class AndroidServlet extends BaseServlet {
     register(postHandler, new SendKeys("/wd/hub/session/:sessionId/element/:id/value"));
     register(getHandler, new GetElementSize("/wd/hub/session/:sessionId/element/:id/size"));
     register(postHandler, new ExecuteScript("/wd/hub/session/:sessionId/execute"));
+    register(postHandler, new ExecuteAsyncScript("/wd/hub/session/:sessionId/execute_async"));
     register(postHandler, new GoForward("/wd/hub/session/:sessionId/forward"));
     register(postHandler, new FrameSwitchHandler("/wd/hub/session/:sessionId/frame"));
     register(postHandler, new SendKeyToActiveElement("/wd/hub/session/:sessionId/keys"));
     register(postHandler, new Refresh("/wd/hub/session/:sessionId/refresh"));
     register(getHandler, new CaptureScreenshot("/wd/hub/session/:sessionId/screenshot"));
     register(getHandler, new LogElementTree("/wd/hub/session/:sessionId/source"));
-    register(postHandler, new SetImplicitWaitTimeout("/wd/hub/session/:sessionId/timeouts/implicit_wait"));
+    register(postHandler, new TimeoutsHandler("/wd/hub/session/:sessionId/timeouts"));
+    register(postHandler, new AsyncTimeoutHandler(
+        "/wd/hub/session/:sessionId/timeouts/async_script"));
+    register(postHandler, new SetImplicitWaitTimeout(
+        "/wd/hub/session/:sessionId/timeouts/implicit_wait"));
     register(getHandler, new GetPageTitle("/wd/hub/session/:sessionId/title"));
     register(getHandler, new GetCurrentUrl("/wd/hub/session/:sessionId/url"));
     register(postHandler, new OpenUrl("/wd/hub/session/:sessionId/url"));
-    register(postHandler, new SwitchWindow("/wd/hub/session/:sessionId/window"));
+    register(postHandler, new SwitchContext("/wd/hub/session/:sessionId/window"));
     register(getHandler, new GetWindowSize("/wd/hub/session/:sessionId/window/:windowHandle/size"));
-    register(getHandler, new GetWindowHandle("/wd/hub/session/:sessionId/window_handle"));
-    register(getHandler, new GetWindowHandles("/wd/hub/session/:sessionId/window_handles"));
-    
+    register(getHandler, new GetContext("/wd/hub/session/:sessionId/window_handle"));
+    register(getHandler, new GetContexts("/wd/hub/session/:sessionId/window_handles"));
+    register(getHandler, new GetScreenOrientation("/wd/hub/session/:sessionId/orientation"));
+    register(postHandler, new RotateScreen("/wd/hub/session/:sessionId/orientation"));
+
     // Advanced Touch API
     register(postHandler, new SingleTapOnElement("/wd/hub/session/:sessionId/touch/click"));
     register(postHandler, new Down("/wd/hub/session/:sessionId/touch/down"));
@@ -141,32 +158,43 @@ public class AndroidServlet extends BaseServlet {
     register(postHandler, new DoubleTapOnElement("/wd/hub/session/:sessionId/touch/doubleclick"));
     register(postHandler, new LongPressOnElement("/wd/hub/session/:sessionId/touch/longclick"));
     register(postHandler, new Flick("/wd/hub/session/:sessionId/touch/flick"));
+    
+    // The new endpoints for context switching coming with Selenium 3.0 
+    register(getHandler, new GetContext("/wd/hub/session/:sessionId/context"));
+    register(getHandler, new GetContexts("/wd/hub/session/:sessionId/contexts"));
+    register(postHandler, new SwitchContext("/wd/hub/session/:sessionId/context"));
 
     // Custom extensions to wire protocol
     register(getHandler, new GetScreenState("/wd/hub/-selendroid/:sessionId/screen/brightness"));
     register(postHandler, new SetScreenState("/wd/hub/-selendroid/:sessionId/screen/brightness"));
     register(postHandler, new InspectorTap("/wd/hub/session/:sessionId/tap/2"));
+    register(getHandler, new GetCommandConfiguration(
+        "/wd/hub/-selendroid/:sessionId/configure/command/:command"));
+    register(postHandler, new SetCommandConfiguration(
+        "/wd/hub/-selendroid/:sessionId/configure/command/:command"));
 
     // currently not yet supported
-    register(getHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/orientation"));
-    register(postHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/orientation"));
-    register(postHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/timeouts"));
-    register(postHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/timeouts/async_script"));
-    register(postHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/execute_async"));
-    register(getHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/ime/available_engines"));
+    register(getHandler, new UnknownCommandHandler(
+        "/wd/hub/session/:sessionId/ime/available_engines"));
     register(getHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/ime/active_engine"));
     register(getHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/ime/activated"));
     register(postHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/ime/deactivate"));
     register(postHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/ime/activate"));
     register(deleteHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/window"));
-    register(postHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/window/:windowHandle/size"));
-    register(postHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/window/:windowHandle/position"));
-    register(getHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/window/:windowHandle/position"));
-    register(postHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/window/:windowHandle/maximize"));
+    register(postHandler, new UnknownCommandHandler(
+        "/wd/hub/session/:sessionId/window/:windowHandle/size"));
+    register(postHandler, new UnknownCommandHandler(
+        "/wd/hub/session/:sessionId/window/:windowHandle/position"));
+    register(getHandler, new UnknownCommandHandler(
+        "/wd/hub/session/:sessionId/window/:windowHandle/position"));
+    register(postHandler, new UnknownCommandHandler(
+        "/wd/hub/session/:sessionId/window/:windowHandle/maximize"));
     register(getHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/element/:id"));
     register(postHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/element/active"));
-    register(getHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/element/:id/equals/:other"));
-    register(getHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/element/:id/css/:propertyName"));
+    register(getHandler, new UnknownCommandHandler(
+        "/wd/hub/session/:sessionId/element/:id/equals/:other"));
+    register(getHandler, new UnknownCommandHandler(
+        "/wd/hub/session/:sessionId/element/:id/css/:propertyName"));
     register(postHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/moveto"));
     register(postHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/buttondown"));
     register(postHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/buttonup"));
@@ -176,23 +204,32 @@ public class AndroidServlet extends BaseServlet {
     register(getHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/local_storage"));
     register(postHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/local_storage"));
     register(deleteHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/local_storage"));
-    register(getHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/local_storage/key/:key"));
-    register(deleteHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/local_storage/key/:key"));
+    register(getHandler, new UnknownCommandHandler(
+        "/wd/hub/session/:sessionId/local_storage/key/:key"));
+    register(deleteHandler, new UnknownCommandHandler(
+        "/wd/hub/session/:sessionId/local_storage/key/:key"));
     register(getHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/local_storage/size"));
     register(getHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/location"));
     register(postHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/location"));
     register(getHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/local_storage"));
     register(postHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/local_storage"));
     register(deleteHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/local_storage"));
-    register(getHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/local_storage/key/:key"));
-    register(deleteHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/local_storage/key/:key"));
+    register(getHandler, new UnknownCommandHandler(
+        "/wd/hub/session/:sessionId/local_storage/key/:key"));
+    register(deleteHandler, new UnknownCommandHandler(
+        "/wd/hub/session/:sessionId/local_storage/key/:key"));
     register(getHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/local_storage/size"));
     register(getHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/session_storage"));
     register(postHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/session_storage"));
     register(deleteHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/session_storage"));
-    register(getHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/session_storage/key/:key"));
-    register(deleteHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/session_storage/key/:key"));
-    register(getHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/session_storage/size"));
+    register(getHandler, new UnknownCommandHandler(
+        "/wd/hub/session/:sessionId/session_storage/key/:key"));
+    register(deleteHandler, new UnknownCommandHandler(
+        "/wd/hub/session/:sessionId/session_storage/key/:key"));
+    register(getHandler, new UnknownCommandHandler(
+        "/wd/hub/session/:sessionId/session_storage/size"));
+
+    // handled in the standalone-server
     register(postHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/log"));
     register(getHandler, new UnknownCommandHandler("/wd/hub/session/:sessionId/log/types"));
   }
@@ -201,6 +238,11 @@ public class AndroidServlet extends BaseServlet {
     String sessionId = getParameter(mappedUri, request.uri(), ":sessionId");
     if (sessionId != null) {
       request.data().put(SESSION_ID_KEY, sessionId);
+    }
+    
+    String command = getParameter(mappedUri, request.uri(), ":command");
+    if (command != null) {
+      request.data().put(COMMAND_NAME_KEY, command);
     }
 
     String id = getParameter(mappedUri, request.uri(), ":id");
@@ -217,7 +259,12 @@ public class AndroidServlet extends BaseServlet {
 
   @Override
   public void handleRequest(HttpRequest request, HttpResponse response, BaseRequestHandler handler) {
-    if (handler == null) {
+    if ("/favicon.ico".equals(request.uri()) && handler == null) {
+      response.setStatus(404);
+      response.end();
+      return;
+    } else if (handler == null) {
+      SelendroidLogger.log("handler is null. not support uri is: " + request.uri());
       replyWithServerError(response);
       return;
     }
@@ -228,7 +275,8 @@ public class AndroidServlet extends BaseServlet {
         DefaultSelendroidDriver driver =
             (DefaultSelendroidDriver) request.data().get(AndroidServlet.DRIVER_KEY);
         if (driver != null && driver.isAlertPresent()) {
-          result = new SelendroidResponse(handler.getSessionId(request), 26, "Unhandled Alert present");
+          result =
+              new SelendroidResponse(handler.getSessionId(request), 26, "Unhandled Alert present");
           handleResponse(request, response, (SelendroidResponse) result);
           return;
         }
@@ -248,7 +296,8 @@ public class AndroidServlet extends BaseServlet {
         String sessionId = getParameter(handler.getMappedUri(), request.uri(), ":sessionId");
         result = new SelendroidResponse(sessionId, 13, ae);
       } catch (Exception e) {
-        SelendroidLogger.log("Error occurred while handling request and got AppCrashedException.", e);
+        SelendroidLogger.log("Error occurred while handling request and got AppCrashedException.",
+            e);
         replyWithServerError(response);
         return;
       }

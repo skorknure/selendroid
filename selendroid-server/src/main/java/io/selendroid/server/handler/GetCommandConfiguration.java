@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013 eBay Software Foundation and selendroid committers.
+ * Copyright 2014 eBay Software Foundation and selendroid committers.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -16,25 +16,26 @@ package io.selendroid.server.handler;
 import io.selendroid.server.RequestHandler;
 import io.selendroid.server.Response;
 import io.selendroid.server.SelendroidResponse;
+import io.selendroid.server.model.Session;
 import io.selendroid.util.SelendroidLogger;
-import org.json.JSONArray;
+
 import org.json.JSONException;
 import org.webbitserver.HttpRequest;
 
-import java.util.Set;
+/**
+ * Determine the configuration of a command.
+ */
+public class GetCommandConfiguration extends RequestHandler {
 
-public class GetWindowHandles extends RequestHandler {
-
-  public GetWindowHandles(String mappedUri) {
+  public GetCommandConfiguration(String mappedUri) {
     super(mappedUri);
   }
 
   @Override
   public Response handle(HttpRequest request) throws JSONException {
-    SelendroidLogger.log("get window handles command");
-
-    Set<String> windowHandles = getSelendroidDriver(request).getWindowHandles();
-
-    return new SelendroidResponse(getSessionId(request), new JSONArray(windowHandles));
+    SelendroidLogger.log("Get command configuration");
+    Session session = getSelendroidDriver(request).getSession();
+    String command = getCommandName(request);
+    return new SelendroidResponse(getSessionId(request), session.getCommandConfiguration(command));
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013 eBay Software Foundation and selendroid committers.
+ * Copyright 2014 eBay Software Foundation and selendroid committers.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -11,19 +11,21 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package io.selendroid.device;
+package io.selendroid.server.model;
 
-public enum DeviceType {
-  PHONE, EMULATOR;
+/**
+ * Represents possible screen orientations.
+ */
+public enum ScreenOrientation {
+  LANDSCAPE("landscape"), PORTRAIT("portrait");
 
-  public static DeviceType fromString(String text) {
-    if (text != null) {
-      for (DeviceType b : DeviceType.values()) {
-        if (text.equalsIgnoreCase(b.name())) {
-          return b;
-        }
-      }
-    }
-    return null;
+  private final String value;
+
+  private ScreenOrientation(String value) {
+    this.value = value;
+  }
+
+  public String value() {
+    return value;
   }
 }

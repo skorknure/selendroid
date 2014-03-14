@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013 eBay Software Foundation and selendroid committers.
+ * Copyright 2012-2014 eBay Software Foundation and selendroid committers.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -13,13 +13,22 @@
  */
 package io.selendroid;
 
+import io.selendroid.adb.AdbConnection;
+
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.openqa.selenium.Capabilities;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.OutputType;
+import org.openqa.selenium.Rotatable;
+import org.openqa.selenium.ScreenOrientation;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.interactions.HasTouchScreen;
 import org.openqa.selenium.interactions.TouchScreen;
-import org.openqa.selenium.remote.DriverCommand;
+import org.openqa.selenium.remote.ExecuteMethod;
 import org.openqa.selenium.remote.RemoteExecuteMethod;
 import org.openqa.selenium.remote.RemoteTouchScreen;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -34,18 +43,25 @@ public class SelendroidDriver extends RemoteWebDriver
     implements
       HasTouchScreen,
       ScreenBrightness,
-      TakesScreenshot {
+      TakesScreenshot,
+      Rotatable,
+      Configuration,
+      JavascriptExecutor,
+      AdbSupport {
 
   private RemoteTouchScreen touchScreen;
+  private RemoteAdbConnection adbConnection;
 
-  public SelendroidDriver(String url, Capabilities caps) throws Exception {
+  public SelendroidDriver(URL url, Capabilities caps) throws Exception {
     super(new SelendroidCommandExecutor(url), caps);
     touchScreen = new RemoteTouchScreen(new RemoteExecuteMethod(this));
   }
 
   public SelendroidDriver(Capabilities caps) throws Exception {
-    super(caps);
-    touchScreen = new RemoteTouchScreen(new RemoteExecuteMethod(this));
+    super(new SelendroidCommandExecutor(), caps);
+    RemoteExecuteMethod executeMethod = new RemoteExecuteMethod(this);
+    touchScreen = new RemoteTouchScreen(executeMethod);
+    adbConnection = new RemoteAdbConnection(executeMethod);
   }
 
   /**
@@ -61,7 +77,8 @@ public class SelendroidDriver extends RemoteWebDriver
    */
   @Override
   public <X> X getScreenshotAs(OutputType<X> target) throws WebDriverException {
-    String base64 = execute(DriverCommand.SCREENSHOT).getValue().toString();
+    String base64 =
+        execute(org.openqa.selenium.remote.DriverCommand.SCREENSHOT).getValue().toString();
     return target.convertFromBase64Png(base64);
   }
 
@@ -81,5 +98,69 @@ public class SelendroidDriver extends RemoteWebDriver
   @Override
   public void setBrightness(int desiredBrightness) {
     execute("selendroid-setBrightness", ImmutableMap.of("brightness", desiredBrightness));
+  }
+
+  @Override
+  public void rotate(ScreenOrientation orientation) {
+    execute(org.openqa.selenium.remote.DriverCommand.SET_SCREEN_ORIENTATION,
+        ImmutableMap.of("orientation", orientation));
+  }
+
+  @Override
+  public ScreenOrientation getOrientation() {
+    return ScreenOrientation.valueOf((String) execute(
+        org.openqa.selenium.remote.DriverCommand.GET_SCREEN_ORIENTATION).getValue());
+  }
+
+  @Override
+  public void setConfiguration(DriverCommand command, String key, Object value) {
+    Map<String, Object> parameters = new HashMap<String, Object>();
+    parameters.put("command", command.command);
+    parameters.put(key, value);
+    execute("selendroid-setCommandConfiguration", parameters);
+  }
+
+  @Override
+  public Map<String, Object> getConfiguration(DriverCommand command) {
+    Response response =
+        execute("selendroid-getCommandConfiguration", ImmutableMap.of("command", command.command));
+
+    return (Map<String, Object>) response.getValue();
+  }
+
+  @Override
+  public AdbConnection getAdbConnection() {
+    return adbConnection;
+  }
+
+  public class RemoteAdbConnection implements AdbConnection {
+    private final ExecuteMethod executeMethod;
+
+    public RemoteAdbConnection(ExecuteMethod executeMethod) {
+      this.executeMethod = executeMethod;
+    }
+
+    @Override
+    public void tap(int x, int y) {
+      Map<String, Object> parameters = new HashMap<String, Object>();
+      parameters.put("x", x);
+      parameters.put("y", y);
+      executeMethod.execute("selendroid-adb-tap", parameters);
+    }
+
+    @Override
+    public void sendText(String text) {
+      executeMethod.execute("selendroid-adb-sendText", ImmutableMap.of("text", text));
+    }
+
+    @Override
+    public void sendKeyEvent(int keyCode) {
+      executeMethod.execute("selendroid-adb-sendKeyEvent", ImmutableMap.of("keyCode", keyCode));
+    }
+
+    @Override
+    public void executeShellCommand(String command) {
+      execute("selendroid-adb-executeShellCommand", ImmutableMap.of("command", command));
+    }
   }
 }

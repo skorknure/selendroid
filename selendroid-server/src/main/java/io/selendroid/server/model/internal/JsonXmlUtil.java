@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013 eBay Software Foundation and selendroid committers.
+ * Copyright 2012-2014 eBay Software Foundation and selendroid committers.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -23,11 +23,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 public class JsonXmlUtil {
-  public static Document toXml(JSONObject tree) {
-    return buildXmlDoc(tree);
-  }
-
-  private static Document buildXmlDoc(JSONObject tree) {
+  public static Document buildXmlDocument(JSONObject tree) {
     DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
     DocumentBuilder builder = null;
     try {
@@ -44,24 +40,30 @@ public class JsonXmlUtil {
     return document;
   }
 
-
   private static String extractTagName(String clazz) {
     if (clazz.contains(".")) {
       String[] elements = clazz.split("\\.");
       String simpleClassName = elements[elements.length - 1];
       if (simpleClassName.contains("$")) {
-        String[] subElememts = simpleClassName.split("\\$");
-        return subElememts[subElememts.length - 1];
+        return replaceDollarCharacter(clazz);
       }
       return simpleClassName;
+    } else if (clazz.contains("$")) {
+      return replaceDollarCharacter(clazz);
     }
     return clazz;
+  }
+
+  private static String replaceDollarCharacter(String simpleClassName) {
+    String[] subElememts = simpleClassName.split("\\$");
+    return subElememts[subElememts.length - 1];
   }
 
   private static void buildXmlNode(JSONObject from, Element parent, Document document) {
     if (from == null) {
       return;
     }
+
     Element node = document.createElement(extractTagName(from.optString("type")));
     parent.appendChild(node);
 
