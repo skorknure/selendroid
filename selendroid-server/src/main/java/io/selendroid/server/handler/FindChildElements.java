@@ -24,10 +24,11 @@ import io.selendroid.server.model.AndroidElement;
 import io.selendroid.server.model.By;
 import io.selendroid.server.model.internal.NativeAndroidBySelector;
 import io.selendroid.util.SelendroidLogger;
+import io.selendroid.server.HttpRequest;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.webbitserver.HttpRequest;
 
 import java.util.List;
 

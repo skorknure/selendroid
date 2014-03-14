@@ -36,8 +36,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import org.webbitserver.HttpRequest;
-
 public class SelendroidServlet extends BaseServlet {
   private static final Logger log = Logger.getLogger(SelendroidServlet.class.getName());
   protected Map<String, BaseRequestHandler> redirectHandler =

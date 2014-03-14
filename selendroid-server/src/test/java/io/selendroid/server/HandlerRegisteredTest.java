@@ -13,38 +13,32 @@
  */
 package io.selendroid.server;
 
+import io.netty.handler.codec.http.HttpMethod;
 import io.selendroid.server.internal.SelendroidAssert;
-
-import java.net.InetSocketAddress;
-import java.net.URI;
-import java.util.concurrent.Executors;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
-import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
-import org.webbitserver.WebServer;
-import org.webbitserver.WebServers;
-import org.webbitserver.helpers.NamingThreadFactory;
 
 public class HandlerRegisteredTest extends BaseTest {
-  private WebServer server = null;
+  private SelendroidWebServer server = null;
 
   @Override
   public void setup() throws Exception {
     //server = WebServers.createWebServer(port);
-    URI remoteUri =
-        URI.create("http://127.0.0.1"
-            + (port == 80 ? "" : (":" + port)) + "/");
+//    URI remoteUri =
+//        URI.create("http://127.0.0.1"
+//            + (port == 80 ? "" : (":" + port)) + "/");
 
-    NamingThreadFactory namingThreadFactory =
-            new NamingThreadFactory(Executors.defaultThreadFactory(), "selendroid-test-handler");
-    server =
-        WebServers.createWebServer(Executors.newSingleThreadExecutor(namingThreadFactory),
-            new InetSocketAddress(port), remoteUri);
-    server.add(new AndroidTestServlet());
+//    NamingThreadFactory namingThreadFactory =
+//            new NamingThreadFactory(Executors.defaultThreadFactory(), "selendroid-test-handler");
+//    server =
+//        WebServers.createWebServer(Executors.newSingleThreadExecutor(namingThreadFactory),
+//            new InetSocketAddress(port), remoteUri);
+    server = new SelendroidWebServer(port);
+    server.addHandler(new AndroidTestServlet());
     server.start();
   }
 

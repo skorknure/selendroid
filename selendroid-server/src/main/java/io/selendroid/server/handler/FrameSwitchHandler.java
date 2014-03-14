@@ -16,9 +16,10 @@ package io.selendroid.server.handler;
 import io.selendroid.server.RequestHandler;
 import io.selendroid.server.Response;
 import io.selendroid.server.SelendroidResponse;
+import io.selendroid.server.HttpRequest;
+
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.webbitserver.HttpRequest;
 
 public class FrameSwitchHandler extends RequestHandler {
 

@@ -16,9 +16,8 @@ package io.selendroid.server.inspector;
 import org.json.JSONException;
 import io.selendroid.ServerInstrumentation;
 import io.selendroid.server.model.SelendroidDriver;
-import org.webbitserver.HttpRequest;
-import org.webbitserver.HttpResponse;
-
+import io.selendroid.server.HttpRequest;
+import io.selendroid.server.HttpResponse;
 
 public abstract class SelendroidInspectorView {
   protected ServerInstrumentation serverInstrumentation = null;

@@ -4,8 +4,9 @@ import io.selendroid.ServerInstrumentation;
 import io.selendroid.server.RequestHandler;
 import io.selendroid.server.Response;
 import io.selendroid.server.SelendroidResponse;
+import io.selendroid.server.HttpRequest;
+
 import org.json.JSONException;
-import org.webbitserver.HttpRequest;
 
 public class TimeoutsHandler extends RequestHandler {
   public TimeoutsHandler(String uri) {

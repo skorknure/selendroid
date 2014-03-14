@@ -19,10 +19,11 @@ import io.selendroid.server.model.AndroidElement;
 import io.selendroid.server.model.AndroidNativeElement;
 import io.selendroid.server.model.AndroidWebElement;
 import io.selendroid.util.SelendroidLogger;
-import org.json.JSONException;
 import io.selendroid.exceptions.SelendroidException;
 import io.selendroid.server.SelendroidResponse;
-import org.webbitserver.HttpRequest;
+import io.selendroid.server.HttpRequest;
+
+import org.json.JSONException;
 
 public class LogElement extends RequestHandler {
 

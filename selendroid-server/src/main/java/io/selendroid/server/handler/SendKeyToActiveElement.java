@@ -16,10 +16,11 @@ package io.selendroid.server.handler;
 import io.selendroid.server.RequestHandler;
 import io.selendroid.server.Response;
 import io.selendroid.util.SelendroidLogger;
-import org.json.JSONException;
 import io.selendroid.exceptions.SelendroidException;
 import io.selendroid.server.SelendroidResponse;
-import org.webbitserver.HttpRequest;
+import io.selendroid.server.HttpRequest;
+
+import org.json.JSONException;
 
 public class SendKeyToActiveElement extends RequestHandler {
 

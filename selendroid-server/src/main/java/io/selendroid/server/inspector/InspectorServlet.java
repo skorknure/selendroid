@@ -14,6 +14,9 @@
 package io.selendroid.server.inspector;
 
 import io.selendroid.ServerInstrumentation;
+import io.selendroid.server.HttpHandler;
+import io.selendroid.server.HttpRequest;
+import io.selendroid.server.HttpResponse;
 import io.selendroid.server.inspector.view.InspectorView;
 import io.selendroid.server.inspector.view.ResourceView;
 import io.selendroid.server.inspector.view.TreeView;
@@ -21,11 +24,6 @@ import io.selendroid.server.inspector.view.WebViewContentView;
 import io.selendroid.server.model.SelendroidDriver;
 
 import java.nio.charset.Charset;
-
-import org.webbitserver.HttpControl;
-import org.webbitserver.HttpHandler;
-import org.webbitserver.HttpRequest;
-import org.webbitserver.HttpResponse;
 
 public class InspectorServlet implements HttpHandler {
   private SelendroidDriver driver = null;
@@ -45,12 +43,10 @@ public class InspectorServlet implements HttpHandler {
   }
 
   @Override
-  public void handleHttpRequest(HttpRequest httpRequest, HttpResponse httpResponse,
-      HttpControl httpControl) throws Exception {
-
+  public void handleHttpRequest(HttpRequest httpRequest, HttpResponse httpResponse) throws Exception {
     if (httpRequest.uri().startsWith(INSPECTOR)) {
       if (httpRequest.uri().equals(INSPECTOR) || httpRequest.uri().equals(INSPECTOR + "/")) {
-        httpResponse.status(301);
+        httpResponse.setStatus(301);
         String session = null;
         if (driver.getSession() != null) {
           session = driver.getSession().getSessionId();
@@ -58,12 +54,15 @@ public class InspectorServlet implements HttpHandler {
           String newSessionUri =
               "http://" + httpRequest.header("Host") + httpRequest.uri() + divider + "session/"
                   + session + "/";
-          
-          httpResponse.header("Location", newSessionUri).end();
+
+          httpResponse.setLocation(newSessionUri);
+          httpResponse.end();
         } else {
-          httpResponse.header("Content-Type", "text/html").charset(Charset.forName("UTF-8"))
-              .status(200)
-              .content("Selendroid Inspector can only be used with an active test session.").end();
+          httpResponse.setContentType("text/html");
+          httpResponse.setEncoding(Charset.forName("UTF-8"));
+          httpResponse.setStatus(200);
+          httpResponse.setContent("Selendroid Inspector can only be used with an active test session.");
+          httpResponse.end();
         }
       } else if (httpRequest.uri().startsWith(INSPECTOR)&& httpRequest.uri().endsWith("/tree")) {
         treeView.render(httpRequest, httpResponse);
@@ -74,8 +73,6 @@ public class InspectorServlet implements HttpHandler {
       } else if (httpRequest.uri().equals(INSPECTOR + "/latestWebView")) {
         webViewContentView.render(httpRequest, httpResponse);
       }
-    } else {
-      httpControl.nextHandler();
     }
   }
 }

@@ -19,7 +19,7 @@ import io.selendroid.server.RequestHandler;
 import io.selendroid.server.Response;
 import io.selendroid.server.SelendroidResponse;
 import io.selendroid.util.SelendroidLogger;
-import org.webbitserver.HttpRequest;
+import io.selendroid.server.HttpRequest;
 
 public class CaptureScreenshot extends RequestHandler {
 

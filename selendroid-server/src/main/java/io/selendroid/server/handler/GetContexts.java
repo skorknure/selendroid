@@ -13,13 +13,13 @@
  */
 package io.selendroid.server.handler;
 
+import io.selendroid.server.HttpRequest;
 import io.selendroid.server.RequestHandler;
 import io.selendroid.server.Response;
 import io.selendroid.server.SelendroidResponse;
 import io.selendroid.util.SelendroidLogger;
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.webbitserver.HttpRequest;
 
 import java.util.Set;
 

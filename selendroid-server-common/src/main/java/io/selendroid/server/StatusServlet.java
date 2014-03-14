@@ -15,10 +15,6 @@ package io.selendroid.server;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.webbitserver.HttpControl;
-import org.webbitserver.HttpHandler;
-import org.webbitserver.HttpRequest;
-import org.webbitserver.HttpResponse;
 
 
 public class StatusServlet implements HttpHandler {
@@ -30,10 +26,12 @@ public class StatusServlet implements HttpHandler {
   }
 
   @Override
-  public void handleHttpRequest(HttpRequest httpRequest, HttpResponse httpResponse,
-      HttpControl httpControl) throws Exception {
+  public void handleHttpRequest(HttpRequest httpRequest, HttpResponse httpResponse) throws Exception {
+    if (!httpRequest.uri().equals("/wd/hub/status")) {
+      return;
+    }
     if (!"GET".equals(httpRequest.method())) {
-      httpResponse.status(500);
+      httpResponse.setStatus(500);
       httpResponse.end();
       return;
     }
@@ -70,11 +68,11 @@ public class StatusServlet implements HttpHandler {
     json.put("supportedApps", apps);
 
     // httpResponse.header("Content-Type", "text/plain");
-    httpResponse.header("Content-Type", "application/json");
+    httpResponse.setContentType("application/json");
     JSONObject result=new JSONObject();
     result.put("status",0);
     result.put("value",json);
-    httpResponse.content(result.toString());
+    httpResponse.setContent(result.toString());
     httpResponse.end();
   }
 }

@@ -18,13 +18,13 @@ import io.selendroid.server.Response;
 import io.selendroid.server.model.TouchScreen;
 import io.selendroid.server.model.interactions.Coordinates;
 import io.selendroid.util.SelendroidLogger;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import io.selendroid.exceptions.SelendroidException;
 import io.selendroid.server.SelendroidResponse;
 import io.selendroid.server.model.AndroidElement;
-import org.webbitserver.HttpRequest;
+import io.selendroid.server.HttpRequest;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class DoubleTapOnElement extends RequestHandler {
 

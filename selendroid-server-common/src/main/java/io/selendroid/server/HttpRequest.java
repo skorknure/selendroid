@@ -1,11 +1,11 @@
 /*
  * Copyright 2012 Selenium committers Copyright 2012 Software Freedom Conservancy
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -13,29 +13,21 @@
  */
 package io.selendroid.server;
 
-import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Map;
 
-public interface HttpResponse {
+public interface HttpRequest {
 
-  void setStatus(int status);
+  public String uri();
 
-  void setContentType(String mimeType);
+  public String header(String name);
 
-  void setContentEncoding(String encoding);
+  public List<String> headers(String name);
 
-  void setLocation(String url);
+  public String body();
 
-  void setContentLength(int length);
+  public String method();
 
-  void setContent(byte[] data);
+  public Map<String, Object> data();
 
-  void setContent(String message);
-
-  void setEncoding(Charset charset);
-
-  void sendRedirect(String to);
-
-  void sendTemporaryRedirect(String to);
-
-  void end();
 }

@@ -15,6 +15,8 @@ package io.selendroid.android.impl;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+
+import io.netty.handler.codec.http.HttpMethod;
 import io.selendroid.android.AndroidApp;
 import io.selendroid.android.AndroidDevice;
 import io.selendroid.android.AndroidSdk;
@@ -26,7 +28,7 @@ import java.io.File;
 
 import org.apache.commons.exec.CommandLine;
 import org.apache.http.HttpResponse;
-import org.jboss.netty.handler.codec.http.HttpMethod;
+
 import org.junit.Assert;
 import org.junit.Test;
 

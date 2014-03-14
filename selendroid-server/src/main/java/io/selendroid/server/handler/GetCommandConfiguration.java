@@ -18,9 +18,9 @@ import io.selendroid.server.Response;
 import io.selendroid.server.SelendroidResponse;
 import io.selendroid.server.model.Session;
 import io.selendroid.util.SelendroidLogger;
+import io.selendroid.server.HttpRequest;
 
 import org.json.JSONException;
-import org.webbitserver.HttpRequest;
 
 /**
  * Determine the configuration of a command.

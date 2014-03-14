@@ -13,6 +13,7 @@
  */
 package io.selendroid.server.handler;
 
+import io.netty.handler.codec.http.HttpMethod;
 import io.selendroid.android.AndroidDevice;
 import io.selendroid.exceptions.SelendroidException;
 import io.selendroid.server.BaseSelendroidServerHandler;
@@ -20,12 +21,12 @@ import io.selendroid.server.Response;
 import io.selendroid.server.SelendroidResponse;
 import io.selendroid.server.model.ActiveSession;
 import io.selendroid.server.util.HttpClientUtil;
+import io.selendroid.server.HttpRequest;
+
 import org.apache.http.HttpResponse;
-import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.openqa.selenium.logging.LogEntry;
-import org.webbitserver.HttpRequest;
 
 import java.util.logging.Logger;
 

@@ -16,9 +16,10 @@ package io.selendroid.server.handler;
 import io.selendroid.server.BaseSelendroidServerHandler;
 import io.selendroid.server.Response;
 import io.selendroid.server.SelendroidResponse;
+import io.selendroid.server.HttpRequest;
+
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.webbitserver.HttpRequest;
 
 public class GetLogTypes extends BaseSelendroidServerHandler {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 eBay Software Foundation and selendroid committers.
+ * Copyright 2012-2013 eBay Software Foundation and selendroid committers.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -13,6 +13,7 @@
  */
 package io.selendroid.server.model;
 
+import io.netty.handler.codec.http.HttpMethod;
 import io.selendroid.SelendroidCapabilities;
 import io.selendroid.SelendroidConfiguration;
 import io.selendroid.android.AndroidApp;
@@ -43,7 +44,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -70,7 +70,6 @@ public class SelendroidStandaloneDriver implements ServerDetails {
   private AndroidDriverAPKBuilder androidDriverAPKBuilder = null;
   private SelendroidConfiguration serverConfiguration = null;
   private DeviceManager deviceManager;
-
 
   public SelendroidStandaloneDriver(SelendroidConfiguration serverConfiguration)
       throws AndroidSdkException, AndroidDeviceException {

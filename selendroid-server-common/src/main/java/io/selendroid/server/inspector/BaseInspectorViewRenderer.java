@@ -12,9 +12,9 @@
  * the License.
  */
 package io.selendroid.server.inspector;
+import io.selendroid.server.HttpRequest;
 
 import org.json.JSONException;
-import org.webbitserver.HttpRequest;
 
 public abstract class BaseInspectorViewRenderer {
   public String buildHtml(HttpRequest request) throws JSONException {

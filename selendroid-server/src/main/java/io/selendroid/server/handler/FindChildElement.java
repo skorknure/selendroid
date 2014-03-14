@@ -26,7 +26,7 @@ import io.selendroid.server.model.AndroidElement;
 import io.selendroid.server.model.By;
 import io.selendroid.server.model.internal.NativeAndroidBySelector;
 import io.selendroid.util.SelendroidLogger;
-import org.webbitserver.HttpRequest;
+import io.selendroid.server.HttpRequest;
 
 public class FindChildElement extends RequestHandler {
 

@@ -15,14 +15,14 @@ package io.selendroid.server.handler;
 
 import io.selendroid.server.RequestHandler;
 import io.selendroid.server.Response;
-
-import org.json.JSONException;
 import io.selendroid.exceptions.ElementNotVisibleException;
 import io.selendroid.exceptions.StaleElementReferenceException;
 import io.selendroid.server.SelendroidResponse;
 import io.selendroid.server.model.AndroidElement;
 import io.selendroid.util.SelendroidLogger;
-import org.webbitserver.HttpRequest;
+import io.selendroid.server.HttpRequest;
+
+import org.json.JSONException;
 
 public class ClickElement extends RequestHandler {
 

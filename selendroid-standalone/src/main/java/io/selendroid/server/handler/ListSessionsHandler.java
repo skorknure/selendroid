@@ -17,10 +17,11 @@ import io.selendroid.server.BaseSelendroidServerHandler;
 import io.selendroid.server.Response;
 import io.selendroid.server.SelendroidResponse;
 import io.selendroid.server.model.ActiveSession;
+import io.selendroid.server.HttpRequest;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.webbitserver.HttpRequest;
 
 import java.util.List;
 import java.util.logging.Logger;

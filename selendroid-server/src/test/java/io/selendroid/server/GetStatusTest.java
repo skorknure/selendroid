@@ -13,12 +13,10 @@
  */
 package io.selendroid.server;
 
-
-
+import io.netty.handler.codec.http.HttpMethod;
 import io.selendroid.server.internal.SelendroidAssert;
 
 import org.apache.http.HttpResponse;
-import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;

@@ -20,7 +20,6 @@ import io.selendroid.server.model.KnownElements;
 import io.selendroid.server.model.SelendroidDriver;
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.webbitserver.HttpRequest;
 
 public abstract class RequestHandler extends BaseRequestHandler {
 

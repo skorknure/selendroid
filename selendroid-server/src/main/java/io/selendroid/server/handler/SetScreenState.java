@@ -4,9 +4,10 @@ import io.selendroid.server.RequestHandler;
 import io.selendroid.server.Response;
 import io.selendroid.server.SelendroidResponse;
 import io.selendroid.server.model.TouchScreen;
+import io.selendroid.server.HttpRequest;
+
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.webbitserver.HttpRequest;
 
 /**
  * Allow the device's screen to be turned on or off.

@@ -17,10 +17,6 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.webbitserver.HttpControl;
-import org.webbitserver.HttpHandler;
-import org.webbitserver.HttpRequest;
-
 public abstract class BaseServlet implements HttpHandler {
   public static final String SESSION_ID_KEY = "SESSION_ID_KEY";
   public static final String ELEMENT_ID_KEY = "ELEMENT_ID_KEY";
@@ -55,9 +51,7 @@ public abstract class BaseServlet implements HttpHandler {
   protected abstract void init();
 
   @Override
-  public void handleHttpRequest(HttpRequest request, org.webbitserver.HttpResponse webbitResponse,
-      HttpControl control) throws Exception {
-    HttpResponse response = new WebbitHttpResponse(webbitResponse);
+  public void handleHttpRequest(HttpRequest request, HttpResponse response) throws Exception {
     BaseRequestHandler handler = null;
     if ("GET".equals(request.method())) {
       handler = findMatcher(request, getHandler);
@@ -66,7 +60,7 @@ public abstract class BaseServlet implements HttpHandler {
     } else if ("DELETE".equals(request.method())) {
       handler = findMatcher(request, deleteHandler);
     }
-    webbitResponse.header("Content-Encoding", "none");
+    response.setContentEncoding("none");
     handleRequest(request, response, handler);
   }
 

@@ -18,10 +18,9 @@ import io.selendroid.server.Response;
 import io.selendroid.server.SelendroidResponse;
 import io.selendroid.server.model.ScreenOrientation;
 import io.selendroid.util.SelendroidLogger;
+import io.selendroid.server.HttpRequest;
 
 import org.json.JSONException;
-import org.webbitserver.HttpRequest;
-
 
 public class RotateScreen extends RequestHandler {
 

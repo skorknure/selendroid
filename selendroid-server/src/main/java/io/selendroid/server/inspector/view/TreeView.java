@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2014 eBay Software Foundation and selendroid committers.
+ * Copyright 2012-2013 eBay Software Foundation and selendroid committers.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -19,13 +19,13 @@ import io.selendroid.server.inspector.SelendroidInspectorView;
 import io.selendroid.server.inspector.TreeUtil;
 import io.selendroid.server.model.SelendroidDriver;
 import io.selendroid.util.SelendroidLogger;
+import io.selendroid.server.HttpRequest;
+import io.selendroid.server.HttpResponse;
 
 import java.nio.charset.Charset;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.webbitserver.HttpRequest;
-import org.webbitserver.HttpResponse;
 
 public class TreeView extends SelendroidInspectorView {
   public TreeView(ServerInstrumentation serverInstrumentation, SelendroidDriver driver) {
@@ -38,14 +38,18 @@ public class TreeView extends SelendroidInspectorView {
       source = driver.getFullWindowTree();
     } catch (SelendroidException e) {
       SelendroidLogger.log("error getting WindowSource in TreeView", e);
-      response.header("Content-type", "application/x-javascript").charset(Charset.forName("UTF-8"))
-          .content("{}").end();
+      response.setContentType("application/x-javascript");
+      response.setEncoding(Charset.forName("UTF-8"));
+      response.setContent("{}");
+      response.end();
       return;
     }
 
     JSONObject convertedTree = TreeUtil.createFromNativeWindowsSource(source);
     convertedTree.getJSONObject("metadata").put("xml", TreeUtil.getXMLSource(source));
-    response.header("Content-type", "application/x-javascript").charset(Charset.forName("UTF-8"))
-        .content(convertedTree.toString()).end();
+    response.setContentType("application/x-javascript");
+    response.setEncoding(Charset.forName("UTF-8"));
+    response.setContent(convertedTree.toString());
+    response.end();
   }
 }

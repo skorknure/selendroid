@@ -17,9 +17,10 @@ import io.selendroid.exceptions.AndroidDeviceException;
 import io.selendroid.server.BaseSelendroidServerHandler;
 import io.selendroid.server.Response;
 import io.selendroid.server.SelendroidResponse;
+import io.selendroid.server.HttpRequest;
+
 import org.json.JSONException;
 import org.openqa.selenium.internal.Base64Encoder;
-import org.webbitserver.HttpRequest;
 
 import java.util.logging.Logger;
 

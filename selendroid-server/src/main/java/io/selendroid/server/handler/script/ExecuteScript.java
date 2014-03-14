@@ -15,15 +15,15 @@ package io.selendroid.server.handler.script;
 
 import io.selendroid.server.RequestHandler;
 import io.selendroid.server.Response;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import io.selendroid.exceptions.SelendroidException;
 import io.selendroid.exceptions.UnsupportedOperationException;
 import io.selendroid.server.SelendroidResponse;
 import io.selendroid.util.SelendroidLogger;
-import org.webbitserver.HttpRequest;
+import io.selendroid.server.HttpRequest;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class ExecuteScript extends RequestHandler {
 

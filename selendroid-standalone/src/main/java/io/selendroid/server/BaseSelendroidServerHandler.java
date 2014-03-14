@@ -15,8 +15,6 @@ package io.selendroid.server;
 
 import io.selendroid.server.model.SelendroidStandaloneDriver;
 
-import org.webbitserver.HttpRequest;
-
 public abstract class BaseSelendroidServerHandler extends BaseRequestHandler {
 
   public BaseSelendroidServerHandler(String mappedUri) {

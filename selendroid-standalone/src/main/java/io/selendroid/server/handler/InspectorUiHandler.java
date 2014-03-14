@@ -18,8 +18,9 @@ import io.selendroid.server.Response;
 import io.selendroid.server.UiResponse;
 import io.selendroid.server.inspector.BaseInspectorViewRenderer;
 import io.selendroid.server.model.ActiveSession;
+import io.selendroid.server.HttpRequest;
+
 import org.json.JSONException;
-import org.webbitserver.HttpRequest;
 
 import java.util.logging.Logger;
 

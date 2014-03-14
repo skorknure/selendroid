@@ -17,12 +17,12 @@ import io.selendroid.server.BaseSelendroidServerHandler;
 import io.selendroid.server.Response;
 import io.selendroid.server.SelendroidResponse;
 import io.selendroid.server.model.ActiveSession;
+import io.selendroid.server.HttpRequest;
 
 import java.util.logging.Logger;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.webbitserver.HttpRequest;
 
 public class AdbTap extends BaseSelendroidServerHandler {
   private static final Logger log = Logger.getLogger(AdbTap.class.getName());

@@ -20,10 +20,10 @@ import io.selendroid.server.SelendroidResponse;
 import io.selendroid.server.model.AndroidElement;
 import io.selendroid.server.model.interactions.Coordinates;
 import io.selendroid.util.SelendroidLogger;
+import io.selendroid.server.HttpRequest;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.webbitserver.HttpRequest;
 
 public class LongPressOnElement extends RequestHandler {
 

@@ -13,6 +13,7 @@
  */
 package io.selendroid.server.support;
 
+import io.netty.handler.codec.http.HttpMethod;
 import io.selendroid.android.AndroidApp;
 import io.selendroid.android.impl.DefaultAndroidEmulator;
 import io.selendroid.device.DeviceTargetPlatform;
@@ -27,7 +28,6 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.apache.http.HttpResponse;
-import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.json.JSONObject;
 import org.openqa.selenium.logging.LogEntry;
 
